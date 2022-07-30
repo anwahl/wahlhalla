@@ -1,0 +1,26 @@
+<div class="container">
+    <h3><span class="glyphicon glyphicon-list"></span> Items</h3>
+    <div id="items<%=itemType%>Table" class="taskTable"></div>
+</div>
+<script>
+    var rowMenu = [
+    {
+        label: "Edit Item",
+        action:function(e,row){
+            window.location.replace('/<%=itemType%>/'+row.getIndex());
+        }
+    },
+    {
+        label: "Delete Item",
+        action:function(e,row){
+            window.location.replace('/delete/<%=itemType%>/'+row.getIndex());
+      }
+    }];
+ 
+    let items<%=itemType%>Table = new Tabulator("#items<%=itemType%>Table", {
+      rowContextMenu: rowMenu,
+      ajaxURL:"/<%=itemTypeGetURL%>",
+      layout:"fitColumns",
+      autoColumns: true
+    });
+</script>

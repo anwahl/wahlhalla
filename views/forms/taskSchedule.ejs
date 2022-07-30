@@ -1,0 +1,47 @@
+<script>
+    $.getJSON("/tasks", function(data){
+      data.forEach(element => {
+        <% if (locals.scheduledTask) { %>
+            if (element.id != '<%=scheduledTask.task%>') { 
+                $("#scheduleTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
+            } else {
+                $("#scheduleTask").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+            }
+        <% } else { %>
+            $("#scheduleTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
+        <% } %>
+      });
+    });
+    $.getJSON("/scheduleTypes", function(data){
+      data.forEach(element => {
+        <% if (locals.scheduledTask) { %>
+            if (element != '<%=scheduledTask.type%>') { 
+                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+            } else {
+                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" checked value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+            }
+        <% } else { %>
+                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+        <% } %>
+
+
+      });
+    });
+</script>
+<div class="container" id="scheduleTaskForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Schedule Task</h3>
+    <form action="/taskSchedule/<%= locals.scheduledTask ? scheduledTask.id : '' %>" method="POST">
+        <label class="form-label" for="scheduleTask">Task:</label>
+            <select class="form-inline input-sm form-input " id="scheduleTask" name="scheduleTask">
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="scheduleType">Type:</label><span id="scheduleTypes"></span>
+        <br/>
+        <label class="form-label" for="scheduleDate">Date:</label><input class="form-inline input-sm form-input " placeholder="Date" name="scheduleDate" type="date" id="scheduleDate" value="<%= locals.scheduledTask ? new Date(scheduledTask.dueDate).getFullYear() +'-' + ('0' + (new Date(scheduledTask.dueDate).getMonth() +1).toString()).slice(-2) + '-' + ('0' + (new Date(scheduledTask.dueDate).getDate()).toString()).slice(-2): '' %>" required/>
+        <br/>
+        <label class="form-label" for="scheduleTime">Time:</label><input class="form-inline input-sm form-input " placeholder="Time" name="scheduleTime" type="time" id="scheduleTime" value="<%= locals.scheduledTask ? scheduledTask.timeOfDay : '' %>" />
+        <br/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>

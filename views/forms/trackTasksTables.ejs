@@ -1,0 +1,145 @@
+
+<div class="container" id="track<%=type%>sForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Incompleted Tasks</h3>
+    <%- include ("../partials/filter.ejs", { id : 'incomplete'+type, type: type}) %>
+    <form action="/completeTasks?complete=1" method="POST">
+        <div id="incomplete<%=type%>Table" class="taskTable"></div>
+        <button class="smt-btn btn btn-primary" type="submit">Mark Complete</button>
+    </form>
+</div>
+<div class="container">
+    <h3><span class="glyphicon glyphicon-check"></span> Completed Tasks</h3>
+    <%- include ("../partials/filter.ejs", { id : 'complete'+type, type: type}) %>
+    <form action="/completeTasks?complete=0" method="POST">
+        <div id="complete<%=type%>Table" class="taskTable"></div>
+        <button class="smt-btn btn btn-primary" type="submit">Mark Incomplete</button>
+    </form>
+    <br/>
+</div>
+<script>
+  let incomplete<%=type%>Table = new Tabulator("#incomplete<%=type%>Table", {
+    responsiveLayoutCollapseFormatter:function(data){
+        //data - an array of objects containing the column title and value for each cell
+        var list = document.createElement("ul");
+
+        data.forEach(function(col){
+            let item = document.createElement("li");
+            item.innerHTML = "<strong>" + col.title + "</strong> - " + col.value;
+            list.appendChild(item);
+        });
+
+        return Object.keys(data).length ? list : "";
+    },
+    responsiveLayout:"collapse", 
+    height:"350px",
+	  selectable:true,
+    rowContextMenu: rowMenu,
+    ajaxURL:"/assignedTasks?type=<%=type%>&complete=0&byUser="+byUser,
+    columns:[ 
+    {formatter:"responsiveCollapse", width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
+      {title:"Assignee", field:"username"},
+      { title: "Location Information",
+        columns: [  
+        {title:"Location", field:"locationName"},
+        {title:"Target Type", field:"targetTypeName"},
+        {title:"Target", field:"targetName"}
+        ]
+      },
+      { title: "Task Information",
+        columns: [  
+        {title:"Task Type", field:"taskTypeName"},
+        {title:"Task", field:"taskName"}
+      ]},
+      { title: "Time Information",
+        columns: [ 
+          {title:"Frequency", field:"scheduleType"},
+          {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
+                  var val = cell.getValue();
+                  new Date(cell.getValue()) < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
+                   : new Date(cell.getValue()) > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
+                   return new Date(val).toString().slice(0, 15);
+          }}
+          <% if(type == "APPOINTMENT") { %>
+            ,{title:"Time", field:"timeOfDay"}
+          <%}%>
+      ]}
+      <% if(type == "BILL") { %>
+        ,{title:"Value", field:"value"}
+      <%}%>
+      <% if(type == "APPOINTMENT") { %>
+        ,{title:"Time", field:"timeOfDay"}
+      <%}%>
+    ],
+  });
+  incomplete<%=type%>Table.on('rowClick', (e, row) => {
+    if (document.getElementById("incompleteAssignedTask"+row.getIndex())) {
+      document.getElementById("incompleteAssignedTask"+row.getIndex()).remove();
+      new Date(row.getData().dueDate) < new Date(new Date().setHours(0, 0, 0, 0)) ? row.getElement().style.backgroundColor = "#f5beba"
+                   : new Date(row.getData().dueDate) > new Date(new Date().setHours(23, 59, 59, 0)) ? row.getElement().style.backgroundColor = "#c2f2d8" : row.getElement().style.backgroundColor = null;
+    } else {
+      $("#incomplete<%=type%>Table").append("<input type='hidden' id='incompleteAssignedTask"+row.getIndex()+"' name='assignedTask' value='"+row.getIndex()+"'/>");
+      row.getElement().style.backgroundColor = "#9abcea";
+    }
+  });
+
+  let complete<%=type%>Table = new Tabulator("#complete<%=type%>Table", {
+    responsiveLayoutCollapseFormatter:function(data){
+        //data - an array of objects containing the column title and value for each cell
+        var list = document.createElement("ul");
+
+        data.forEach(function(col){
+            let item = document.createElement("li");
+            item.innerHTML = "<strong>" + col.title + "</strong> - " + col.value;
+            list.appendChild(item);
+        });
+
+        return Object.keys(data).length ? list : "";
+    },
+    responsiveLayout:"collapse", 
+	  selectable:true,
+    height:"350px",
+    rowContextMenu: rowMenu,
+    ajaxURL:"/assignedTasks?type=<%=type%>&complete=1&byUser="+byUser,
+    columns:[ 
+    {formatter:"responsiveCollapse", width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
+    {title:"Assignee", field:"username"},
+      { title: "Location Information",
+        columns: [  
+        {title:"Location", field:"locationName"},
+        {title:"Target Type", field:"targetTypeName"},
+        {title:"Target", field:"targetName"}
+        ]
+      },
+      { title: "Task Information",
+        columns: [  
+        {title:"Task Type", field:"taskTypeName"},
+        {title:"Task", field:"taskName"}
+      ]},
+      { title: "Time Information",
+        columns: [ 
+          {title:"Frequency", field:"scheduleType"},
+          {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
+                  var val = cell.getValue();
+                   return new Date(val).toString().slice(0, 15);
+          }}
+          <% if(type == "APPOINTMENT") { %>
+            ,{title:"Time", field:"timeOfDay"}
+          <%}%>
+      ]}
+      <% if(type == "BILL") { %>
+        ,{title:"Value", field:"value"}
+      <%}%>
+      
+    ],
+  });
+
+  complete<%=type%>Table.on('rowClick', (e, row) => {
+    if (document.getElementById("completeAssignedTask"+row.getIndex())) {
+      document.getElementById("completeAssignedTask"+row.getIndex()).remove();
+    } else {
+      $("#complete<%=type%>Table").append("<input type='hidden' id='completeAssignedTask"+row.getIndex()+"' name='assignedTask' value='"+row.getIndex()+"'/>");
+    }
+  });
+</script>
+<%- include ("../partials/filterScript.ejs", { id : 'incomplete'+type}) %>
+<%- include ("../partials/filterScript.ejs", { id : 'complete'+type}) %>

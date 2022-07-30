@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include ("../partials/header.ejs") %>
+</head>
+
+<body>
+
+  <%- include ("../partials/nav.ejs") %>
+
+  
+  <div class="container">
+    <h2>Manage Items</h2>
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#personTab">Person</a></li>
+      <li><a href="#taskTypeTab">Task Type</a></li>
+      <li><a href="#taskTab">Task</a></li>
+      <li><a href="#locationTab">Location</a></li>
+      <li><a href="#targetTypeTab">Target Type</a></li>
+      <li><a href="#targetTab">Target</a></li>
+      <li><a href="#taskTargetTab">Task Target</a></li>
+      <li><a href="#taskValueTab">Task Value</a></li>
+      <li><a href="#scheduleTab">Schedule a Task</a></li>
+    </ul>
+  
+    <div class="tab-content">
+      <div id="personTab" class="tab-pane fade in active">
+        <%- include ("../forms/person.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'person', itemTypeGetURL: 'persons'}) %>
+      </div>
+      <div id="taskTypeTab" class="tab-pane fade">
+        <%- include ("../forms/taskType.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'taskType', itemTypeGetURL: 'taskTypes'}) %>
+      </div>
+      <div id="taskTab" class="tab-pane fade">
+        <%- include ("../forms/task.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'task', itemTypeGetURL: 'tasks'}) %>
+      </div>
+      <div id="locationTab" class="tab-pane fade">
+        <%- include ("../forms/location.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'location', itemTypeGetURL: 'locations'}) %>
+      </div>
+      <div id="targetTypeTab" class="tab-pane fade">
+        <%- include ("../forms/targetType.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'targetType', itemTypeGetURL: 'targetTypes'}) %>
+      </div>
+      <div id="targetTab" class="tab-pane fade">
+        <%- include ("../forms/target.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'target', itemTypeGetURL: 'targets'}) %>
+      </div>
+      <div id="taskTargetTab" class="tab-pane fade">
+        <%- include ("../forms/taskTarget.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'taskTarget', itemTypeGetURL: 'taskTargets'}) %>
+      </div>
+      <div id="taskValueTab" class="tab-pane fade">
+        <%- include ("../forms/taskValue.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'taskValue', itemTypeGetURL: 'taskValues'}) %>
+      </div>
+      <div id="scheduleTab" class="tab-pane fade">
+        <%- include ("../forms/taskSchedule.ejs") %>
+        <%- include ("../forms/itemsTable.ejs", {itemType: 'scheduledTask', itemTypeGetURL: 'scheduledTasks'}) %>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+  $(document).ready(function(){
+    $(".nav-tabs a").click(function(){
+      $(this).tab('show');
+    });
+  });
+  </script>
+
+
+
+</body>
+</html>

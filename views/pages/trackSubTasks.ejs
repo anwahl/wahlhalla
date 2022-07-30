@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include ("../partials/header.ejs") %>
+</head>
+
+<body>
+
+  <%- include ("../partials/nav.ejs") %>
+
+<div class="container">
+    <h3><span class="glyphicon glyphicon-list"></span> Sub Tasks</h3>
+    <div class="glyphicon glyphicon-plus"> <a data-toggle="modal" data-target="#createSubTaskModal">Add Subtask</a></div>
+    <div id="subTasksTable" class="taskTable"></div>
+</div>
+
+<div class="modal fade" id="createSubTaskModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Add Subtask</h4>
+          </div>
+          <div class="modal-body">
+            <form action="/addSubTask?task=<%=task%>" method="POST">
+                <input name="description" placeholder="Description" required />
+                <button type="submit" class="btn btn-default" >Add Subtask</button>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+</div>
+
+</body>
+</html>
+<script>
+    var rowMenu = [
+        /*{
+      label: "Complete subtask",
+      action:function(e,row){
+        //stuff
+      }
+    },*/
+    {
+        label: "Delete subtask",
+        action:function(e,row){
+            window.location.replace('/deleteSubTask?subtask='+row.getData().id+'&task=<%=task%>');
+      }
+    }];
+ 
+    let subTasksTable = new Tabulator("#subTasksTable", {
+      rowContextMenu: rowMenu,
+      ajaxURL:"/subTasks?task=<%=task%>",
+      layout:"fitColumns",
+      columns:[ 
+        {title:"Description", field:"name"},
+      ],
+    });
+</script>

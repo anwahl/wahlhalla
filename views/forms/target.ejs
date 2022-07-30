@@ -1,0 +1,64 @@
+<script>
+    $.getJSON("/targetTypes", function(data){
+      data.forEach(element => {
+        <% if (locals.target) { %>
+            if (element.id != '<%=target.type%>') { 
+                $("#targetType").append("<option value='" + element.id + "'>" + element.name + "</option>");
+            } else {
+                $("#targetType").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+            }
+        <% } else { %>
+            $("#targetType").append("<option value='" + element.id + "'>" + element.name + "</option>");
+        <% } %>
+      });
+    });
+    $.getJSON("/locations", function(data){
+      data.forEach(element => {
+        <% if (locals.target) { %>
+            if (element.id != '<%=target.location%>') { 
+                $("#targetLocation").append("<option value='" + element.id + "'>" + element.name + "</option>");
+            } else {
+                $("#targetLocation").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+            }
+        <% } else { %>
+            $("#targetLocation").append("<option value='" + element.id + "'>" + element.name + "</option>");
+        <% } %>
+      });
+    });
+    $.getJSON("/persons", function(data){
+      data.forEach(element => {
+        <% if (locals.target) { %>
+            if (element.id != '<%=target.person%>') { 
+                $("#targetPerson").append("<option value='" + element.id + "'>" + element.firstName + " " + element.lastName +  "</option>");
+            } else {
+                $("#targetPerson").append("<option value='" + element.id + "' selected>" + element.firstName + " " + element.lastName +  "</option>");
+            }
+        <% } else { %>
+           $("#targetPerson").append("<option value='" + element.id + "'>" + element.firstName + " " + element.lastName +  "</option>");
+        <% } %>
+      });
+    });
+</script>
+<div class="container" id="targetForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Add Target</h3>
+    <form action="/target/<%= locals.target ? target.id : '' %>" method="POST">
+        <label class="form-label" for="targetLocation">Location:</label>
+            <select class="form-inline input-sm form-input " id="targetLocation" name="targetLocation" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="targetType">Type:</label>
+            <select class="form-inline input-sm form-input " id="targetType" name="targetType" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="targetDescription">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="targetDescription" id="targetDescription" value="<%= locals.target ? target.name : '' %>" required/>
+        <br/>
+        <label class="form-label" for="targetPerson">Person:</label>
+            <select class="form-inline input-sm form-input " id="targetPerson" name="targetPerson">
+                <option value="">...</option>
+            </select>
+        <br/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>

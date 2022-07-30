@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include ("../partials/header.ejs") %>
+</head>
+
+<body>
+
+  <%- include ("../partials/nav.ejs") %>
+
+  <div class="container">
+    <% if (locals.person) { %>
+        <%- include ("../forms/person.ejs") %>
+    <% } %>
+    <% if (locals.taskType) { %>
+        <%- include ("../forms/taskType.ejs") %>
+    <% } %>
+    <% if (locals.task) { %>
+        <%- include ("../forms/task.ejs") %>
+    <% } %>
+    <% if (locals.scheduledTask) { %>
+        <%- include ("../forms/taskSchedule.ejs") %>
+    <% } %>
+    <% if (locals.location) { %>
+        <%- include ("../forms/location.ejs") %>
+    <% } %>
+    <% if (locals.targetType) { %>
+        <%- include ("../forms/targetType.ejs") %>
+    <% } %>
+    <% if (locals.target) { %>
+        <%- include ("../forms/target.ejs") %>
+     <% } %>
+    <% if (locals.taskTarget) { %>
+        <%- include ("../forms/taskTarget.ejs") %>
+    <% } %>
+    <% if (locals.taskValue) { %>
+        <%- include ("../forms/taskValue.ejs") %>
+    <% } %>
+
+  </div>
+
+
+</body>
+</html>

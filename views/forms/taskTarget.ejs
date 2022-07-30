@@ -1,0 +1,28 @@
+<script>
+$.getJSON("/tasks?notInTable=taskTarget", function(data){
+    data.forEach(element => {
+      $("#taskTargetTask").append("<option value='" + element.id + "''>" + element.name + "</option>");
+    });
+  });
+  $.getJSON("/targets", function(data){
+    data.forEach(element => {
+      $("#taskTargetTarget").append("<option value='" + element.id + "''>" + element.name + "</option>");
+    });
+  });
+</script>
+<div class="container" id="taskTargetForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Add Task Target</h3>
+    <form action="/taskTarget" method="POST">
+        <label class="form-label" for="taskTargetTask">Task:</label>
+            <select class="form-inline input-sm form-input " id="taskTargetTask" name="taskTargetTask" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="taskTargetTarget">Target:</label>
+            <select class="form-inline input-sm form-input " id="taskTargetTarget" name="taskTargetTarget" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>

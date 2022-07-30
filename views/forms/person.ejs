@@ -1,0 +1,12 @@
+<div class="container" id="personForm">
+    <h3><span class="glyphicon glyphicon-user"></span> Add Person</h3>
+    <form action="/person/<%= locals.person ? person.id : '' %>" method="POST">
+        <label class="form-label" for="firstName">Name:</label><input class="form-inline input-sm form-input " placeholder="First Name" name="firstName" id="firstName" value="<%= locals.person ? person.firstName : '' %>" required/>
+        <input class="form-inline input-sm form-input "placeholder="Last Name" name="lastName" id="lastName" value="<%= locals.person ? person.lastName : '' %>" required/>
+        <br/>
+        <label class="form-label" for="birthdate">Birthdate:</label><input class="form-inline input-sm form-input " placeholder="Birthdate" name="birthdate" type="date" id="birthdate" value="<%= locals.person ? new Date(person.birthdate).getFullYear() +'-' + ('0' + (new Date(person.birthdate).getMonth() +1).toString()).slice(-2) + '-' + ('0' + (new Date(person.birthdate).getDate()).toString()).slice(-2): '' %>"/>
+        <br/>
+        <label class="form-label" for="email">E-Mail:</label><input class="form-inline input-sm form-input " placeholder="E-Mail" name="email" id="email" value="<%= locals.person ? person.username : '' %>"/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>      

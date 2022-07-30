@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include ("../partials/header.ejs") %>
+</head>
+
+<body>
+
+  <%- include ("../partials/nav.ejs") %>
+
+<div class="jumbotron text-center">
+  <div class="container">
+    <a href="/" class="logo">
+      <img src="/images/WAHLHALLA-W.png">
+    </a>
+    <h1>Welcome To Wahlhalla</h1>
+    <p>This is a in-progress app for keeping your household organized! Named after the Wahl family, who needed their household organized.</p>
+    <a type="button" class="btn btn-lg btn-default" href="/"><span class="glyphicon glyphicon-th-list"></span> View All Tasks</a>
+    <a type="button" class="btn btn-lg btn-primary" href="/?byUser=true"><span class="glyphicon glyphicon-flash"></span> View Own Tasks</a>
+  </div>
+</div>
+<div class="container">
+  <%- include ("../pages/trackTasks.ejs") %>
+</div>
+
+</body>
+</html>

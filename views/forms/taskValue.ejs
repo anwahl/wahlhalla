@@ -1,0 +1,29 @@
+<script>
+    $.getJSON("/tasks?notInTable=taskValue", function(data){
+        data.forEach(element => {
+            <% if (locals.taskValue) { %>
+                if (element.id != '<%=task.type%>') { 
+                    $("#taskValueTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
+                } else {
+                    $("#taskValueTask").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+                }
+            <% } else { %>
+                $("#taskValueTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
+            <% } %>
+        });
+      });
+</script>
+    <div class="container" id="taskValueForm">
+        <h3><span class="glyphicon glyphicon-plus"></span> Add Task Value</h3>
+        <form action="/taskValue<%= locals.taskValue ? taskValue.id : '' %>" method="POST">
+            <label class="form-label" for="taskTargetTask">Task:</label>
+                <select class="form-inline input-sm form-input " id="taskValueTask" name="taskValueTask" required>
+                    <option value="">...</option>
+                </select>
+            <br/>
+            <label class="form-label" for="taskValueValue">Value:</label>
+            <input class="form-inline input-sm form-input" type="number" placeholder="Value" id="taskValueValue" name="taskValueValue" value="<%= locals.taskValue ? taskValue.value : '' %>" required/>
+            <br/>
+            <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+        </form>
+    </div>

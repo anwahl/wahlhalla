@@ -1,0 +1,28 @@
+<script>
+     $.getJSON("/taskTypeCategories", function(data){
+      data.categories.forEach(element => {
+        <% if (locals.taskType) { %>
+            if (element != '<%=taskType.category%>') { 
+                $("#taskTypeCategory").append("<option value='" + element + "'>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</option>");
+            } else {
+                $("#taskTypeCategory").append("<option value='" + element + "' selected>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</option>");
+            }
+        <% } else { %>
+            $("#taskTypeCategory").append("<option value='" + element + "'>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</option>");
+        <% } %>
+      });
+    });
+</script>
+<div class="container" id="taskTypeForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Add/Edit Task Type</h3>
+    <form action="/taskType/<%= locals.taskType ? taskType.id : '' %>" method="POST">
+        <label class="form-label" for="taskTypeCategory">Category:</label>
+            <select class="form-inline input-sm form-input " id="taskTypeCategory" name="taskTypeCategory" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="taskTypeDescription">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="taskTypeDescription" id="taskTypeDescription" value="<%= locals.taskType ? taskType.name : '' %>" required/>
+        <br/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>

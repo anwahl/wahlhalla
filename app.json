@@ -1,0 +1,8 @@
+{
+  "name": "Wahlhalla",
+  "description": "A trask tracking app for my family.",
+  "repository": "https://github.com/anwahl/wahlhalla",
+  "logo": "https://house.wahlhalla.com/images/WAHLHALLA-W.png",
+  "keywords": ["node", "express", "heroku"],
+  "image": "heroku/nodejs"
+}

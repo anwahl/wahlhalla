@@ -1,0 +1,53 @@
+<script>
+    function today<%=id%>Filter(data) {
+        var date = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+        return data.dueDate == date;
+    }
+    function currentWeek<%=id%>Filter(data) {
+        var curDate = new Date(new Date().setHours(0,0,0,0));
+        var sunday = new Date(curDate.setDate(curDate.getDate() - curDate.getDay()));
+        var saturday = new Date(curDate.setDate(curDate.getDate() - curDate.getDay() + 7));
+        return new Date(data.dueDate).getTime() >= sunday.getTime() && new Date(data.dueDate).getTime() <= saturday.getTime();
+    }
+
+    function frequency<%=id%>Filter(data) {
+        return data.scheduleType == document.getElementById("<%=id%>-filter-field").options[document.getElementById("<%=id%>-filter-field").selectedIndex].value.toUpperCase();
+    }
+
+    //Trigger setFilter function with correct parameters
+    function update<%=id%>Filter(){
+        var filterVal = document.getElementById("<%=id%>-filter-field").options[document.getElementById("<%=id%>-filter-field").selectedIndex].value;
+        var typeVal = document.getElementById("<%=id%>-filter-type").options[document.getElementById("<%=id%>-filter-type").selectedIndex].value;
+        var filter = filterVal == "today" ? <%=id%>Table.setFilter(today<%=id%>Filter) : filterVal == "daily" || filterVal == "weekly" || filterVal == "monthly" || filterVal == "yearly" || filterVal == "standalone" ? <%=id%>Table.setFilter(frequency<%=id%>Filter) : filterVal == "currentWeek" ? <%=id%>Table.setFilter(currentWeek<%=id%>Filter) : filterVal;
+
+
+        if(filterVal == "today" || filterVal == "daily" || filterVal == "monthly" || filterVal == "yearly" || filterVal == "weekly" || filterVal == "standalone" ||  filterVal == "currentWeek"){
+            document.getElementById("<%=id%>-filter-type").disabled = true;
+            document.getElementById("<%=id%>-filter-value").disabled = true;
+        }else{
+            document.getElementById("<%=id%>-filter-type").disabled = false;
+            document.getElementById("<%=id%>-filter-value").disabled = false;
+        }
+        if(filterVal != "today" && filterVal != "daily" && filterVal != "weekly" && filterVal != "monthly" && filterVal != "yearly" && filterVal != "standalone" && filterVal != "currentWeek"){
+            <%=id%>Table.setFilter(filterVal,typeVal, document.getElementById("<%=id%>-filter-value").value);
+        }
+    }
+
+    //Update filters on value change
+    document.getElementById("<%=id%>-filter-field").addEventListener("change", update<%=id%>Filter);
+    document.getElementById("<%=id%>-filter-type").addEventListener("change", update<%=id%>Filter);
+    document.getElementById("<%=id%>-filter-value").addEventListener("keyup", update<%=id%>Filter);
+
+    //Clear filters on "Clear Filters" button click
+    document.getElementById("<%=id%>-filter-clear").addEventListener("click", function(){
+        <%=id%>Table.removeFilter(document.getElementById("<%=id%>-filter-field").options[document.getElementById("<%=id%>-filter-field").selectedIndex].value,document.getElementById("<%=id%>-filter-type").options[document.getElementById("<%=id%>-filter-type").selectedIndex].value, document.getElementById("<%=id%>-filter-value").value);
+        <%=id%>Table.removeFilter(today<%=id%>Filter);
+        <%=id%>Table.removeFilter(frequency<%=id%>Filter);
+        <%=id%>Table.removeFilter(currentWeek<%=id%>Filter);
+        document.getElementById("<%=id%>-filter-field").value = "";
+        document.getElementById("<%=id%>-filter-type").value = "like";
+        document.getElementById("<%=id%>-filter-value").value = "";
+        document.getElementById("<%=id%>-filter-type").disabled = false;
+        document.getElementById("<%=id%>-filter-value").disabled = false;
+    });    
+</script>

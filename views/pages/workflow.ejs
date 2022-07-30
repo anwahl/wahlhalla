@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include ("../partials/header.ejs") %>
+</head>
+<script>
+    $.getJSON("/taskTypes", function(data){
+      data.forEach(element => {
+        $("#taskType").append("<option value='" + element.id + "''>" + element.name + "</option>");
+      });
+    });
+    $.getJSON("/scheduleTypes", function(data){
+      data.forEach(element => {
+        $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+      });
+    });
+    $.getJSON("/targets", function(data){
+        data.forEach(element => {
+        $("#taskTargetTarget").append("<option value='" + element.id + "''>" + element.name + "</option>");
+        });
+    });
+    $.getJSON("/persons", function(data){
+      data.forEach(element => {
+        $("#assignPerson").append("<option value='" + element.id + "''>" + element.firstName + " " + element.lastName +  "</option>");
+      });
+    });
+    $.getJSON("/tasks", function(data){
+      data.forEach(element => {
+        $("#currentTasks").append(element.name + "<br/0>");
+      });
+    });
+</script>
+<body>
+
+  <%- include ("../partials/nav.ejs") %>
+
+<div class="container">
+    <div class="container" id="workflowForm">
+        <h3><span class="glyphicon glyphicon-plus"></span> Add Task</h3>
+        <form action="/workflow" method="POST">
+            <label class="form-label" for="taskDescription">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="taskDescription" id="taskDescription" required/>
+            <br/>
+            <label class="form-label" for="taskType">Type:</label>
+                <select class="form-inline input-sm form-input " id="taskType" name="taskType" required>
+                    <option value="">...</option>
+                </select>
+            <br/>
+            <label class="form-label" for="taskTargetTarget">Target:</label>
+                <select class="form-inline input-sm form-input " id="taskTargetTarget" name="taskTargetTarget" required>
+                    <option value="">...</option>
+            </select>
+            <br/>
+            <label class="form-label" for="scheduleType">Schedule Type:</label><span id="scheduleTypes"></span>
+            <br/>
+            <label class="form-label" for="scheduleDate">Date:</label><input class="form-inline input-sm form-input " placeholder="Date" name="scheduleDate" type="date" id="scheduleDate" required/>
+            <br/>
+            <label class="form-label" for="scheduleTime">Time:</label><input class="form-inline input-sm form-input " placeholder="Time" name="scheduleTime" type="time" id="scheduleTime"/>
+            <br/>
+            <label class="form-label" for="assignPerson">Assign to Person:</label>
+            <select class="form-inline input-sm form-input " id="assignPerson" name="assignPerson">
+                <option value="">...</option>
+            </select>
+            <br />
+            <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
+</div>
+
+
+</body>
+</html>

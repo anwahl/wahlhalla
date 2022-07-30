@@ -1,0 +1,28 @@
+<script>
+    $.getJSON("/taskTypes", function(data){
+      data.forEach(element => {
+        <% if (locals.task) { %>
+            if (element.id != '<%=task.type%>') { 
+                $("#taskType").append("<option value='" + element.id + "'>" + element.name + "</option>");
+            } else {
+                $("#taskType").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+            }
+        <% } else { %>
+            $("#taskType").append("<option value='" + element.id + "'>" + element.name + "</option>");
+        <% } %>
+      });
+    });
+</script>
+<div class="container" id="taskForm">
+    <h3><span class="glyphicon glyphicon-plus"></span> Add/Edit Task</h3>
+    <form action="/task/<%= locals.task ? task.id : '' %>" method="POST">
+        <label class="form-label" for="taskType">Type:</label>
+            <select class="form-inline input-sm form-input " id="taskType" name="taskType" required>
+                <option value="">...</option>
+            </select>
+        <br/>
+        <label class="form-label" for="description">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="taskDescription" id="taskDescription" value="<%= locals.task ? task.name : '' %>" required/>
+        <br/>
+        <button class="smt-btn btn btn-primary" type="submit">Submit</button>
+    </form>
+</div>

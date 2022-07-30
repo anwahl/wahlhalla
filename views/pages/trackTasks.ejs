@@ -1,0 +1,115 @@
+
+<script charset="utf-8">
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  const byUser = urlParams.get('byUser');
+  function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+  }
+  
+  var rowMenu = [
+    {
+      label: "View Subtasks",
+      action:function(e,row){
+        window.location.replace('/trackSubTasks?task='+row.getData().id);
+      }
+    },
+    {
+        separator:true,
+    },
+    {
+        label:"Admin Functions",
+        menu:[
+            {
+                label: "Unassign Task",
+                action:function(e,row){
+                    window.location.replace('/unassignTask/'+row.getIndex());
+              }
+            }
+          ]
+    }
+  ];
+
+  var headerMenu = function(){
+    var menu = [];
+    var columns = this.getColumns();
+
+    for(let column of columns){
+
+        //create checkbox element using font awesome icons
+        let icon = document.createElement("i");
+        icon.classList.add("fas");
+        icon.classList.add(column.isVisible() ? "fa-check-square" : "fa-square");
+
+        //build label
+        let label = document.createElement("span");
+        let title = document.createElement("span");
+
+        title.textContent = " " + column.getDefinition().title;
+
+        label.appendChild(icon);
+        label.appendChild(title);
+
+        //create menu item
+        menu.push({
+            label:label,
+            action:function(e){
+                //prevent menu closing
+                e.stopPropagation();
+
+                //toggle current column visibility
+                column.toggle();
+
+                //change menu item icon
+                if(column.isVisible()){
+                    icon.classList.remove("fa-square");
+                    icon.classList.add("fa-check-square");
+                }else{
+                    icon.classList.remove("fa-check-square");
+                    icon.classList.add("fa-square");
+                }
+            }
+        });
+    }
+
+    return menu;
+  };
+ </script>
+
+<div class="container">
+    <h2>Track Tasks</h2>
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#choreTab">Chores</a></li>
+      <li><a href="#billTab">Bills</a></li>
+      <li><a href="#appointmentTab">Appointments</a></li>
+      <li><a href="#otherTab">Other</a></li>
+      <li><a href="#assignmentTab">Assign</a></li>
+    </ul>
+  
+    <div class="tab-content">
+      <div id="choreTab" class="tab-pane fade in active">
+        <%- include ("../forms/trackTasksTables.ejs", {type:'CHORE'}) %>
+      </div>
+      <div id="billTab" class="tab-pane fade">
+        <%- include ("../forms/trackTasksTables.ejs", {type:'BILL'}) %>
+      </div>
+      <div id="appointmentTab" class="tab-pane fade">
+        <%- include ("../forms/trackTasksTables.ejs", {type:'APPOINTMENT'}) %>
+      </div>
+      <div id="otherTab" class="tab-pane fade">
+        <%- include ("../forms/trackTasksTables.ejs", {type:'OTHER'}) %>
+      </div>
+      <div id="assignmentTab" class="tab-pane fade">
+        <%- include ("../forms/assignTasks.ejs") %>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+  $(document).ready(function(){
+    $(".nav-tabs a").click(function(){
+      $(this).tab('show');
+    });
+  });
+  
+  </script>

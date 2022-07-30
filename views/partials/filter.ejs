@@ -1,0 +1,43 @@
+<div>
+    <select id="<%=id%>-filter-field">
+      <option></option>
+      <option value="today">Today</option>
+      <option value="currentWeek">Current Week</option>
+      <option disabled>──────────</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="yearly">Yearly</option>
+      <option value="standalone">Standalone</option>
+      <option disabled>──────────</option>
+      <option value="username">Assignee</option>
+      <option value="taskTypeName">Task Type</option>
+      <option value="locationName">Location</option>
+      <option value="targetTypeName">Target Type</option>
+      <option value="targetName">Target</option>
+      <option value="taskName">Task</option>
+      <option value="scheduleType">Frequency</option>
+      <option value="dueDate">Due Date</option>
+        <% if(type == "BILL") { %>
+            <option value="value">Value</option>
+        <%}%>
+        <% if(type == "APPOINTMENT") { %>
+            <option value="timeOfDay">Time Of Day</option>
+        <%}%>
+    </select>
+  
+    <select id="<%=id%>-filter-type">
+      <option value="like">like</option>
+      <option value="=">=</option>
+      <option value="<"><</option>
+      <option value="<="><=</option>
+      <option value=">">></option>
+      <option value=">=">>=</option>
+      <option value="!=">!=</option>
+    </select>
+  
+    <input id="<%=id%>-filter-value" type="text" placeholder="value to filter">
+  
+    <button id="<%=id%>-filter-clear">Clear Filter</button>
+  </div>
+
