@@ -69,34 +69,41 @@ class database {
   }
 };
 
-const job = schedule.scheduleJob('30 07 * * *', function(){
-  var connection = mysql.createConnection(process.env.JAWSDB_URL);
-    connection.connect();
-    var findAssignedTasksQuery = `SELECT ast.id, pp.username as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
-    tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.dueDate, st.timeOfDay FROM assignedTask ast join scheduledtask st on ast.scheduledTask = st.id 
-    join task t ON t.id = st.task JOIN tasktype tst ON tst.id = t.\`type\` JOIN tasktarget tsgt ON t.id = tsgt.task JOIN target tgt ON tsgt.target = tgt.id JOIN targettype tty ON tgt.\`type\` = tty.id 
-    JOIN location l ON tgt.location = l.id left JOIN person p ON tgt.person = p.id left join person pp on ast.person = pp.id WHERE  complete = 0 and st.dueDate = CURDATE()  order by st.dueDate asc`;
-    connection.query(findAssignedTasksQuery, function(err, rows, fields) {
-      if (err) throw err;
-      let due = [];
-        if (Array.isArray(rows)){
-          rows.forEach(element => {
-            due.push(element.taskName);
-          });
-         } else {
-            due.push(rows.taskName);
-         }
-        if (due != null && due != undefined && due != '') {
-          twilio.messages.create({
-            body: `"${Array.isArray(due) ? due.join("\", \"") : due}" is due today.`,//TODO: Beef out this message.
-            from: process.env.FROM_NUMBER,
-            to: process.env.TO_NUMBER
-          }).then(message => console.log(message.body));
+
+/** TWILIO */
+if (env === 'production') {
+  const job = schedule.scheduleJob('30 07 * * *', function(){
+    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+      connection.connect();
+      var findAssignedTasksQuery = `SELECT ast.id, pp.username as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
+      tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.dueDate, st.timeOfDay FROM assignedTask ast join scheduledtask st on ast.scheduledTask = st.id 
+      join task t ON t.id = st.task JOIN tasktype tst ON tst.id = t.\`type\` JOIN tasktarget tsgt ON t.id = tsgt.task JOIN target tgt ON tsgt.target = tgt.id JOIN targettype tty ON tgt.\`type\` = tty.id 
+      JOIN location l ON tgt.location = l.id left JOIN person p ON tgt.person = p.id left join person pp on ast.person = pp.id WHERE  complete = 0 and st.dueDate = CURDATE()  order by st.dueDate asc`;
+      connection.query(findAssignedTasksQuery, function(err, rows, fields) {
+        if (err) throw err;
+        let due = [];
+          if (Array.isArray(rows)){
+            rows.forEach(element => {
+              due.push(element.taskName);
+            });
+          } else {
+              due.push(rows.taskName);
+          }
+          if (due != null && due != undefined && due != '') {
+            twilio.messages.create({
+              body: `"${Array.isArray(due) ? due.join("\", \"") : due}" is due today.`,//TODO: Beef out this message.
+              from: process.env.FROM_NUMBER,
+              to: process.env.TO_NUMBER
+            }).then(message => console.log(message.body));
+          }
         }
-      }
-    );
-    connection.end();
-});
+      );
+      connection.end();
+  });
+}
+
+
+/** FORCE SSL */
 
 var forceSsl = function (req, res, next) {
   if (req.headers['x-forwarded-proto'] !== 'https') {
@@ -104,8 +111,6 @@ var forceSsl = function (req, res, next) {
   }
   return next();
 };
-
-
 
 /** APP */
 
@@ -226,12 +231,14 @@ app
             values: [insertValues]
             });
       }).then(rows =>{
-        twilio.messages.create({
-          body: `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date()}`,
-          from: process.env.FROM_NUMBER,
-          to: process.env.TO_NUMBER
-        }).then(message => console.log(message.body));
-       } );
+        if (env === 'production') {
+          twilio.messages.create({
+            body: `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date()}`,
+            from: process.env.FROM_NUMBER,
+            to: process.env.TO_NUMBER
+          }).then(message => console.log(message.body));
+        }
+       });
     }
     res.status(200);
     res.redirect('/');
