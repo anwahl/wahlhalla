@@ -93,3 +93,14 @@ input[type=checkbox], input[type=radio] {
 .tabulator .tabulator-header {
   background-color: #6f677e;
 }
+
+
+.nav-tabs > li {
+  float:none;
+  display:inline-block;
+  zoom:1;
+}
+
+.nav-tabs {
+  text-align:center;
+}

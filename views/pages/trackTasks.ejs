@@ -76,34 +76,43 @@
   };
  </script>
 
-<div class="container">
-    <h2>Track Tasks</h2>
-    <ul class="nav nav-tabs">
-      <li class="active"><a href="#choreTab">Chores</a></li>
-      <li><a href="#billTab">Bills</a></li>
-      <li><a href="#appointmentTab">Appointments</a></li>
-      <li><a href="#otherTab">Other</a></li>
-      <li><a href="#assignmentTab">Assign</a></li>
-    </ul>
-  
-    <div class="tab-content">
-      <div id="choreTab" class="tab-pane fade in active">
-        <%- include ("../forms/trackTasksTables.ejs", {type:'CHORE'}) %>
-      </div>
-      <div id="billTab" class="tab-pane fade">
-        <%- include ("../forms/trackTasksTables.ejs", {type:'BILL'}) %>
-      </div>
-      <div id="appointmentTab" class="tab-pane fade">
-        <%- include ("../forms/trackTasksTables.ejs", {type:'APPOINTMENT'}) %>
-      </div>
-      <div id="otherTab" class="tab-pane fade">
-        <%- include ("../forms/trackTasksTables.ejs", {type:'OTHER'}) %>
-      </div>
-      <div id="assignmentTab" class="tab-pane fade">
-        <%- include ("../forms/assignTasks.ejs") %>
+  <div class="container">
+    <div class="row">
+        <div class="">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Track Tasks</h4>
+                </div>
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#choreTab">Chores</a></li>
+              <li><a href="#billTab">Bills</a></li>
+              <li><a href="#appointmentTab">Appointments</a></li>
+              <li><a href="#otherTab">Other</a></li>
+              <li><a href="#assignmentTab">Assign</a></li>
+            </ul>
+          
+            <div class="tab-content">
+              <div id="choreTab" class="tab-pane fade in active">
+                <%- include ("../forms/trackTasksTables.ejs", {type:'CHORE'}) %>
+              </div>
+              <div id="billTab" class="tab-pane fade">
+                <%- include ("../forms/trackTasksTables.ejs", {type:'BILL'}) %>
+              </div>
+              <div id="appointmentTab" class="tab-pane fade">
+                <%- include ("../forms/trackTasksTables.ejs", {type:'APPOINTMENT'}) %>
+              </div>
+              <div id="otherTab" class="tab-pane fade">
+                <%- include ("../forms/trackTasksTables.ejs", {type:'OTHER'}) %>
+              </div>
+              <div id="assignmentTab" class="tab-pane fade">
+                <%- include ("../forms/assignTasks.ejs") %>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+
   
   <script>
   $(document).ready(function(){
