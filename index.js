@@ -123,9 +123,6 @@ if (env === 'production') {
 app
   .use(express.static(path.join(__dirname, 'public')))
   .use(auth(config))
-  .get('/authorized', function (req, res) {
-    res.send('Secured Resource');
-  })
   .use(bodyParser.urlencoded({extended : true}))
   .use(bodyParser.json())
   .set('views', path.join(__dirname, 'views'))
@@ -231,7 +228,7 @@ app
             });
       }).then(rows =>{
         if (env === 'production') {
-          var message = `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date()}`;
+          var message = `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date(new Date().setHours((new Date().getHours() -6)))}`;
           process.env.TO_NUMBER.split(',').forEach(num => {
             twilio.messages.create({
               body: message,
