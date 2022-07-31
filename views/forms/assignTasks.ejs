@@ -69,7 +69,7 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 32));
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 30));
                  val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
                   return new Date(val).toString().slice(0, 15);
@@ -80,7 +80,7 @@
   unassignedTasksTable.on('rowClick', (e, row) => {
     if (document.getElementById("unassignedTasks"+row.getIndex())) {
       document.getElementById("unassignedTask"+row.getIndex()).remove();
-      var val = new Date(new Date(row.getData().dueDate).setHours(new Date(row.getData().dueDate).getHours() + 32));
+      var val = new Date(new Date(row.getData().dueDate).setHours(new Date(row.getData().dueDate).getHours() + 30));
       new val < new Date(new Date().setHours(0, 0, 0, 0)) ? row.getElement().style.backgroundColor = "#f5beba"
                    : new val > new Date(new Date().setHours(23, 59, 59, 0)) ? row.getElement().style.backgroundColor = "#c2f2d8" : row.getElement().style.backgroundColor = null;
     } else {

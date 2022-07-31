@@ -54,7 +54,7 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 32));
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 30));
                   val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
                    return val.toString().slice(0, 15);
@@ -74,8 +74,9 @@
   incomplete<%=type%>Table.on('rowClick', (e, row) => {
     if (document.getElementById("incompleteAssignedTask"+row.getIndex())) {
       document.getElementById("incompleteAssignedTask"+row.getIndex()).remove();
-      new Date(row.getData().dueDate) < new Date(new Date().setHours(0, 0, 0, 0)) ? row.getElement().style.backgroundColor = "#f5beba"
-                   : new Date(row.getData().dueDate) > new Date(new Date().setHours(23, 59, 59, 0)) ? row.getElement().style.backgroundColor = "#c2f2d8" : row.getElement().style.backgroundColor = null;
+      var val = new Date(new Date(row.getData().dueDate).setHours(new Date(row.getData().dueDate).getHours() + 30));
+      val < new Date(new Date().setHours(0, 0, 0, 0)) ? row.getElement().style.backgroundColor = "#f5beba"
+                   : val > new Date(new Date().setHours(23, 59, 59, 0)) ? row.getElement().style.backgroundColor = "#c2f2d8" : row.getElement().style.backgroundColor = null;
     } else {
       $("#incomplete<%=type%>Table").append("<input type='hidden' id='incompleteAssignedTask"+row.getIndex()+"' name='assignedTask' value='"+row.getIndex()+"'/>");
       row.getElement().style.backgroundColor = "#9abcea";
@@ -119,7 +120,7 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 32));
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 30));
                   return new Date(val).toString().slice(0, 15);
           }}
           <% if(type == "APPOINTMENT") { %>
