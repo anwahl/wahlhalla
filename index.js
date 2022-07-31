@@ -119,7 +119,7 @@ var forceSsl = function (req, res, next) {
 if (env === 'production') {
   app.use(forceSsl);
 }
-//TODO: Add checks to every POST to make sure things are not empty
+//TODO: Add checks to every POST to make sure things are not empty, sanitize everything, too.
 app
   .use(express.static(path.join(__dirname, 'public')))
   .use(auth(config))
@@ -162,14 +162,13 @@ app
       let db = new database;
       let oldRows, newRows;
       let completed = [];
-      db.query( `SELECT st.task, t.name, st.\`type\`, st.dueDate, st.timeOfDay, ast.person from assignedTask ast join scheduledTask st on ast.scheduledTask = st.id join task t on st.task = t.id where ast.id in (${ids})` )
+      db.query( `SELECT st.task, t.name, st.\`type\`, st.dueDate, st.timeOfDay, ast.person from assignedTask ast join scheduledTask st on ast.scheduledTask = st.id join task t on st.task = t.id where ast.id in (${ids}) and st.\`type\` != 'STANDALONE'`)
       .then( rows => {
          oldRows = rows;
          insertValues = [];
          let newDate = new Date();
          if (Array.isArray(rows)){
           rows.forEach(element => {
-
             if (element.type == 'DAILY') {
               newDate = date.addDays(new Date(element.dueDate), 1);
             } else if (element.type == 'WEEKLY') {
@@ -178,8 +177,6 @@ app
               newDate = date.addMonths(new Date(element.dueDate), 1);
             } else if (element.type == 'YEARLY') {
               newDate = date.addYears(new Date(element.dueDate), 1);
-            } else {
-              //in theory, I wanna skip all of this jazz if "STANDALONE". I dunno how to do it.
             }
             while (newDate < new Date()) {
               if (element.type == 'DAILY') {
