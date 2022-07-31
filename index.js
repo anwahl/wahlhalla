@@ -71,7 +71,7 @@ class database {
 
 /** TWILIO */
 if (env === 'production') {
-  const job = schedule.scheduleJob('52 13 * * *', function(){
+  const job = schedule.scheduleJob('30 13 * * *', function(){
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
       connection.connect();
       var findAssignedTasksQuery = `SELECT ast.id, pp.username as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
