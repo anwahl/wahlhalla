@@ -54,7 +54,7 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 30));
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                   val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
                    return val.toString().slice(0, 15);
@@ -74,7 +74,7 @@
   incomplete<%=type%>Table.on('rowClick', (e, row) => {
     if (document.getElementById("incompleteAssignedTask"+row.getIndex())) {
       document.getElementById("incompleteAssignedTask"+row.getIndex()).remove();
-      var val = new Date(new Date(row.getData().dueDate).setHours(new Date(row.getData().dueDate).getHours() + 30));
+      var val = new Date(new Date(row.getData().dueDate).setHours(new Date(row.getData().dueDate).getHours() + 29));
       val < new Date(new Date().setHours(0, 0, 0, 0)) ? row.getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? row.getElement().style.backgroundColor = "#c2f2d8" : row.getElement().style.backgroundColor = null;
     } else {
@@ -120,7 +120,7 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 30));
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                   return new Date(val).toString().slice(0, 15);
           }}
           <% if(type == "APPOINTMENT") { %>
