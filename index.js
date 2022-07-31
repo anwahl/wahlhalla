@@ -71,13 +71,13 @@ class database {
 
 /** TWILIO */
 if (env === 'production') {
-  const job = schedule.scheduleJob('46 13 * * *', function(){
+  const job = schedule.scheduleJob('50 13 * * *', function(){
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
       connection.connect();
       var findAssignedTasksQuery = `SELECT ast.id, pp.username as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
       tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.dueDate, st.timeOfDay FROM assignedTask ast join scheduledtask st on ast.scheduledTask = st.id 
       join task t ON t.id = st.task JOIN tasktype tst ON tst.id = t.\`type\` JOIN tasktarget tsgt ON t.id = tsgt.task JOIN target tgt ON tsgt.target = tgt.id JOIN targettype tty ON tgt.\`type\` = tty.id 
-      JOIN location l ON tgt.location = l.id left JOIN person p ON tgt.person = p.id left join person pp on ast.person = pp.id WHERE  complete = 0 and st.dueDate = date(curdate() - interval 6 hour)  order by st.dueDate asc`;
+      JOIN location l ON tgt.location = l.id left JOIN person p ON tgt.person = p.id left join person pp on ast.person = pp.id WHERE  complete = 0 and st.dueDate <= date(curdate() + interval 6 hour)  order by st.dueDate asc`;
       connection.query(findAssignedTasksQuery, function(err, rows, fields) {
         if (err) throw err;
         let due = [];
