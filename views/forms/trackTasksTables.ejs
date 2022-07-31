@@ -54,10 +54,10 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = cell.getValue();
-                  new Date(cell.getValue()) < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
-                   : new Date(cell.getValue()) > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
-                   return new Date(val).toString().slice(0, 15);
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 32));
+                  val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
+                   : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
+                   return val.toString().slice(0, 15);
           }}
           <% if(type == "APPOINTMENT") { %>
             ,{title:"Time", field:"timeOfDay"}
@@ -119,8 +119,8 @@
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
           {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
-                  var val = cell.getValue();
-                   return new Date(val).toString().slice(0, 15);
+                  var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 32));
+                  return new Date(val).toString().slice(0, 15);
           }}
           <% if(type == "APPOINTMENT") { %>
             ,{title:"Time", field:"timeOfDay"}
