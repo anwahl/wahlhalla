@@ -11,6 +11,7 @@ const Sentry = require("@sentry/node");
 const Tracing = require("@sentry/tracing");
 const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 const schedule = require('node-schedule');
+const { body, validationResult, check, param } = require('express-validator');
 const env = process.env.NODE_ENV;
 
 
@@ -388,7 +389,17 @@ app
    .get('/person', (req, res) => {
       res.render('forms/person');
   })
-   .post('/person', function (req, res) {
+   .post('/person',
+      body('firstName').not().isEmpty().trim().escape(),
+      body('lastName').not().isEmpty().trim().escape(), 
+      body('email').optional({checkFalsy: true}).isEmail(),
+      check('birthdate').optional({checkFalsy: true}).isDate(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into person (firstName, lastName, birthdate, username) values ('${req.body.firstName}','${req.body.lastName}','${req.body.birthdate}','${req.body.email}')`;
@@ -401,7 +412,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/person/:id', (req, res) => {
+  .get('/person/:id',
+      check('id').isInt(),
+      (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
