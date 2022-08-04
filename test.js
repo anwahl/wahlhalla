@@ -1,4 +1,4 @@
-const test = require('node:test');
+const test = require('test');
 
 test('synchronous passing test', (t) => {
     // This test passes because it does not throw an exception.
