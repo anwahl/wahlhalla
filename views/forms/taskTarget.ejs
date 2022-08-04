@@ -1,18 +1,34 @@
 <script>
-$.getJSON("/tasks?notInTable=taskTarget", function(data){
+$.getJSON("/tasks?"<% if (!locals.taskTarget) { %> + " notInTable=taskTarget"  <% } %>, function(data){
     data.forEach(element => {
-      $("#taskTargetTask").append("<option value='" + element.id + "''>" + element.name + "</option>");
+      <% if (locals.taskTarget) { %>
+        if (element.id != '<%=taskTarget.task%>') { 
+            $("#taskTargetTask").append("<option value='" + element.id + "''>" + element.name + "</option>");
+        } else {
+            $("#taskTargetTask").append("<option value='" + element.id + "'' selected>" + element.name + "</option>");
+        }
+      <% } else { %>
+           $("#taskTargetTask").append("<option value='" + element.id + "''>" + element.name + "</option>");
+      <% } %>
     });
   });
   $.getJSON("/targets", function(data){
     data.forEach(element => {
-      $("#taskTargetTarget").append("<option value='" + element.id + "''>" + element.name + "</option>");
+      <% if (locals.taskTarget) { %>
+        if (element.id != '<%=taskTarget.target%>') { 
+           $("#taskTargetTarget").append("<option value='" + element.id + "''>" + element.name + "</option>");
+        } else {
+            $("#taskTargetTarget").append("<option value='" + element.id + "'' selected>" + element.name + "</option>");
+        }
+      <% } else { %>
+           $("#taskTargetTarget").append("<option value='" + element.id + "''>" + element.name + "</option>");
+      <% } %>
     });
   });
 </script>
 <div class="container" id="taskTargetForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add Task Target</h3>
-    <form action="/taskTarget" method="POST">
+    <form action="/taskTarget/<%= locals.taskTarget ? taskTarget.id : '' %>" method="POST">
         <label class="form-label" for="taskTargetTask">Task:</label>
             <select class="form-inline input-sm form-input " id="taskTargetTask" name="taskTargetTask" required>
                 <option value="">...</option>

@@ -1,11 +1,11 @@
 <script>
-    $.getJSON("/tasks?notInTable=taskValue", function(data){
+    $.getJSON("/tasks?"<% if (!locals.taskValue) { %> + " notInTable=taskValue"  <% } %>, function(data){
         data.forEach(element => {
             <% if (locals.taskValue) { %>
-                if (element.id != '<%=task.type%>') { 
+                if (element.id != '<%=taskValue.task%>') { 
                     $("#taskValueTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
                 } else {
-                    $("#taskValueTask").append("<option value='" + element.id + "' selected>" + element.name + "</option>");
+                    $("#taskValueTask").append("<option value='" + element.id + "' selected >" + element.name + "</option>");
                 }
             <% } else { %>
                 $("#taskValueTask").append("<option value='" + element.id + "'>" + element.name + "</option>");
@@ -15,7 +15,7 @@
 </script>
     <div class="container" id="taskValueForm">
         <h3><span class="glyphicon glyphicon-plus"></span> Add Task Value</h3>
-        <form action="/taskValue<%= locals.taskValue ? taskValue.id : '' %>" method="POST">
+        <form action="/taskValue/<%= locals.taskValue ? taskValue.id : '' %>" method="POST">
             <label class="form-label" for="taskTargetTask">Task:</label>
                 <select class="form-inline input-sm form-input " id="taskValueTask" name="taskValueTask" required>
                     <option value="">...</option>

@@ -1,0 +1,17 @@
+responsiveLayoutCollapseFormatter:function(data){
+    //data - an array of objects containing the column title and value for each cell
+    var list = document.createElement("ul");
+
+    data.forEach(function(col){
+        let item = document.createElement("li");
+        item.innerHTML = "<strong>" + col.title + "</strong> - " + col.value;
+        list.appendChild(item);
+    });
+
+    return Object.keys(data).length ? list : "";
+},
+layout:"fitDataFill",
+rowContextMenu: rowMenu,
+selectable:true,
+height:"350px",
+responsiveLayout:"collapse",

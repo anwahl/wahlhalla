@@ -1,0 +1,107 @@
+let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=complete ? '' : 'in' %>complete<%=type%>Table", {
+    <%- include ("../partials/tabulatorConfig.ejs") %>
+    layout:"fitDataStretch",
+    layoutColumnsOnNewData:true,
+    rowContextMenu: rowMenu,
+    ajaxURL:"/assignedTasks?type=<%=type%>&complete=<%=complete%>&byUser=<%=byUser%>",
+    columns:[ 
+    {formatter:"responsiveCollapse", width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
+      {headerSort:false, cellClick:function(e, cell){
+            <% if(!complete) { %>
+              if (document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex())) {
+                document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex()).remove();
+                var val = new Date(new Date(cell.getRow().getData().dueDate).setHours(new Date(cell.getRow().getData().dueDate).getHours() + 29));
+                val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
+                            : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : cell.getRow().getElement().style.backgroundColor = null;
+              } else {
+                $("#incomplete<%=type%>Table").append("<input type='hidden' id='incompleteAssignedTask"+cell.getRow().getIndex()+"' name='assignedTask' value='"+cell.getRow().getIndex()+"'/>");
+                cell.getRow().getElement().style.backgroundColor = "#9abcea";
+              }
+              <% } else { %>
+                if (document.getElementById("completeAssignedTask"+cell.getRow().getIndex())) {
+                  document.getElementById("completeAssignedTask"+cell.getRow().getIndex()).remove();
+                } else {
+                  $("#complete<%=type%>Table").append("<input type='hidden' id='completeAssignedTask"+cell.getRow().getIndex()+"' name='assignedTask' value='"+cell.getRow().getIndex()+"'/>");
+                }
+            <% } %>
+        }},
+      {title:"Assignee", field:"username"},
+      { title: "Location Information",
+        columns: [  
+        {title:"Location", field:"locationName"},
+        {title:"Target Type", field:"targetTypeName"},
+        {title:"Target", field:"targetName"}
+        ]
+      },
+      { title: "Task Information",
+        columns: [  
+        {title:"Task Type", field:"taskTypeName"},
+        {title:"Task", field:"taskName", width:200, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
+          return "<strong>" + cell.getValue() + "</strong>"
+        }}
+      ]},
+      { title: "Time Information",
+        columns: [ 
+          {title:"Frequency", field:"scheduleType"},
+          {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
+                var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
+                <% if(!complete) { %>
+                  val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
+                   : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
+                   return val.toString().slice(0, 15);
+                <% } else { %>
+                  return new Date(val).toString().slice(0, 15);
+                <% } %>
+          }}
+          <% if(type == "APPOINTMENT") { %>
+            ,{title:"Time", field:"timeOfDay"}
+          <%}%>
+      ]}
+      <% if(type == "BILL") { %>
+        ,{title:"Value", field:"value"}
+      <%}%>
+      ],
+      
+      rowFormatter: function(row, e) {
+        if (Array.isArray(row.getData().subtasks) && row.getData().subtasks.length > 0) {
+          var holderEl = document.createElement("div");
+          var tableEl = document.createElement("div");
+      
+          const id = row.getData().id + '<%=type%><%=complete%>';
+      
+          holderEl.style.boxSizing = "border-box";
+          holderEl.style.padding = "10px 10px 10px 10px";
+          holderEl.style.borderTop = "1px solid #333";
+          holderEl.style.borderBotom = "1px solid #333";
+          holderEl.style.background = "#ddd";
+          holderEl.setAttribute('class', "subTable" + id + "");
+      
+          tableEl.style.border = "1px solid #333";
+          tableEl.setAttribute('class', "subTable" + id + "");
+          tableEl.setAttribute('id', "subTable" + id + "");
+      
+          holderEl.appendChild(tableEl);
+      
+          row.getElement().appendChild(holderEl);
+          var <%=type%><%=complete%>subTable = new Tabulator(tableEl, {
+            layout: "fitColumns",
+            data: row.getData().subtasks,
+            columns: [   
+            {
+                title: "Subtasks",
+                field: "description", headerSort:false}
+            ]
+          })
+        }
+      },
+    });
+
+
+    <%=complete ? '' : 'in' %>complete<%=type%>Table.on('rowClick', (e, row) => {
+      if (Array.isArray(row.getData().subtasks) && row.getData().subtasks.length > 0) {
+        $("#subTable" + row.getData().id + '<%=type%><%=complete%>').toggle();
+      }
+    });
+  
+    
+  <%- include ("../partials/filterScript.ejs", { id : (complete ? '' : 'in') + 'complete'+type}) %>

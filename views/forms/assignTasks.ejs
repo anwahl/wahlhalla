@@ -34,24 +34,9 @@
     }];
 
   let unassignedTasksTable = new Tabulator("#unassignedTasksTable", {
-    responsiveLayoutCollapseFormatter:function(data){
-        //data - an array of objects containing the column title and value for each cell
-        var list = document.createElement("ul");
-
-        data.forEach(function(col){
-            let item = document.createElement("li");
-            item.innerHTML = "<strong>" + col.title + "</strong> - " + col.value;
-            list.appendChild(item);
-        });
-
-        return Object.keys(data).length ? list : "";
-    },
-    rowContextMenu: rowMenu,
-    selectable:true,
-    height:"350px",
-    responsiveLayout:"collapse",
+    <%- include ("../partials/tabulatorConfig.ejs") %>
     ajaxURL:"/scheduledTasks",
-    columns:[ //Define Table Columns
+    columns:[ 
     {formatter:"responsiveCollapse", width:75, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
       { title: "Location Information",
         columns: [  

@@ -18,20 +18,24 @@ const env = process.env.NODE_ENV;
 
 
 
+/** SENTRY */
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  integrations: [
-    new Sentry.Integrations.Http({ tracing: true }),
-    new Tracing.Integrations.Express({
-      app,
-    }),
-  ],
-  tracesSampleRate: 1.0,
-});
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
-app.use(Sentry.Handlers.errorHandler());
+if (env === 'production') {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [
+      new Sentry.Integrations.Http({ tracing: true }),
+      new Tracing.Integrations.Express({
+        app,
+      }),
+    ],
+    tracesSampleRate: 1.0,
+  });
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+  app.use(Sentry.Handlers.errorHandler());
+}
+
 
 /** Auth0 config */
 const config = {
@@ -47,30 +51,33 @@ const config = {
 /** Helper functions */
 
 class database {
-  constructor( config ) {
+  constructor(config) {
       this.connection = mysql.createConnection(process.env.JAWSDB_URL );
   }
-  query( sql, args ) {
-      return new Promise( ( resolve, reject ) => {
-          this.connection.query( sql, args, ( err, rows ) => {
-              if ( err )
-                  return reject( err );
-              resolve( rows );
-          } );
-      } );
+  query(sql, args) {
+      return new Promise((resolve, reject) => {
+          this.connection.query(sql, args, (err, rows) => {
+              if (err)
+                  return reject(err);
+              resolve(rows);
+          });
+      });
   }
   close() {
-      return new Promise( ( resolve, reject ) => {
-          this.connection.end( err => {
-              if ( err )
-                  return reject( err );
+      return new Promise(( resolve, reject ) => {
+          this.connection.end(err => {
+              if (err)
+                  return reject(err);
               resolve();
-          } );
-      } );
+          });
+      });
   }
 };
 
+
+
 /** TWILIO */
+
 if (env === 'production') {
   const job = schedule.scheduleJob('30 13 * * *', function(){
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
@@ -120,7 +127,6 @@ var forceSsl = function (req, res, next) {
 if (env === 'production') {
   app.use(forceSsl);
 }
-//TODO: Add checks to every POST to make sure things are not empty, sanitize everything, too.
 app
   .use(express.static(path.join(__dirname, 'public')))
   .use(auth(config))
@@ -129,8 +135,15 @@ app
   .set('views', path.join(__dirname, 'views'))
   .set('view engine', 'ejs')
   .set('trust proxy', true)
-  .get('/', (req, res) => {
-    res.render('pages/index');
+  .get('/', 
+      check('byUser').optional({nullable: true}).trim().escape(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    let byUser = url.parse(req.url, true).query.byUser;
+    res.render('pages/index', {byUser: byUser});
   })
   .get('/management', (req, res) => {
      res.render('pages/management');
@@ -138,10 +151,18 @@ app
  /**
   * Task Tracking
   */
- .get('/trackChores', (req,res) => {
+ .get('/trackTasks', (req,res) => {
    res.render('pages/trackTasks');
  })
- .post('/completeTasks', (req,res) => {
+ .post('/completeTasks', 
+      check('complete').notEmpty().isIn(['0','1']),
+      body('assignedTask').notEmpty().isInt(),
+      (req,res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     let complete = url.parse(req.url, true).query.complete;
     var ids = [];
     if (Array.isArray(req.body.assignedTask)){
@@ -158,7 +179,7 @@ app
 
     if (complete == 1) {
       let db = new database;
-      let oldRows, newRows;
+      let oldRows;
       let completed = [];
       db.query( `SELECT st.task, t.name, st.\`type\`, st.dueDate, st.timeOfDay, ast.person from assignedTask ast join scheduledTask st on ast.scheduledTask = st.id join task t on st.task = t.id where ast.id in (${ids}) and st.\`type\` != 'STANDALONE'`)
       .then( rows => {
@@ -243,7 +264,14 @@ app
     res.status(200);
     res.redirect('/');
   })
-  .get('/delete/:table/:id', function (req, res) {
+  .get('/delete/:table/:id',
+        check('table').notEmpty().isIn(['person','taskType','task','location','targetType','target','taskTarget','taskValue','scheduledTask','assignedTask','subTask']),
+        check('id').notEmpty().isInt(),
+        (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
      let id = req.params.id;
      let table = req.params.table;
      var connection = mysql.createConnection(process.env.JAWSDB_URL);
@@ -263,24 +291,32 @@ app
   .get('/workflow', (req,res) => {
     res.render('pages/workflow');
   })
-  .post('/workflow', async (req,res) => {
-    if (req.body.taskType != null && req.body.taskType != '' && req.body.taskDescription != null && req.body.taskDescription != ''
-    && req.body.scheduleType != null && req.body.scheduleType != '' && req.body.scheduleDate != null && req.body.scheduleDate != '') {
-      //all good.
-      
+  .post('/workflow', 
+        body('taskType').notEmpty().isInt(),
+        body('taskDescription').notEmpty().trim().escape(),
+        body('taskTargetTarget').notEmpty().isInt(),
+        body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
+        body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+        body('scheduleDate').notEmpty().isDate(),
+        async (req,res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
       let scheduleDate = new Date(req.body.scheduleDate);
       let taskRow, scheduledTaskRow;
       let db = new database;
       db.query( `insert into task (type, name) values ('${req.body.taskType}','${req.body.taskDescription}')` )
-      .then( rows => {
+      .then(rows => {
           taskRow = rows;
           return db.query(`insert into taskTarget (task, target) values (${rows.insertId},${req.body.taskTargetTarget})`);
-      } )
+      })
       .then(rows => {
           var scheduleInsert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values (${taskRow.insertId}, '${req.body.scheduleType}', STR_TO_DATE('${req.body.scheduleTime}','%k:%i'), '${scheduleDate.toISOString()}')`;
           return db.query(scheduleInsert);
-      } )
-      .then( rows => {
+      })
+      .then(rows => {
         if (req.body.assignPerson != null && req.body.assignPerson != '') {
           scheduledTaskRow = rows;
           if (req.body.assignPerson != null && req.body.assignPerson != '') {
@@ -289,30 +325,31 @@ app
             return db.query(`insert into assignedTask (scheduledTask) values (${scheduledTaskRow.insertId})`);
           }
         }
-      } )
+      })
       .then(rows => {
           return db.close();
-      } )
-      .then( () => {
-          //console.log(taskRow + " kazoo " + scheduledTaskRow);
-      } );
+      })
       
       res.status(200);
       res.redirect('/workflow');
-    } else {
-      res.redirect('/workflow?error=true');
-    }
   })
  /**
   * Assigned Task
   */
-  .get('/assignedTasks', (req,res) => {
+  .get('/assignedTasks', 
+      check('complete').notEmpty().isIn(['0','1']), 
+      check('byUser').optional({nullable: true}).trim().escape(),
+      check('type').notEmpty().isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
+      async function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     let taskTypeCategory = url.parse(req.url, true).query.type;
     let complete = url.parse(req.url, true).query.complete;
     let byUser = url.parse(req.url, true).query.byUser;
     
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
-    connection.connect();
     var findAssignedTasksQuery = `SELECT ast.id, pp.firstName as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName,
      tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.dueDate, st.timeOfDay FROM assignedTask ast join scheduledtask st on ast.scheduledTask = st.id join task t
       ON t.id = st.task JOIN tasktype tst ON tst.id = t.\`type\` JOIN tasktarget tsgt ON t.id = tsgt.task JOIN target tgt ON tsgt.target = tgt.id JOIN targettype tty ON tgt.\`type\` = tty.id JOIN location l ON tgt.location = l.id left
@@ -321,13 +358,47 @@ app
       findAssignedTasksQuery = findAssignedTasksQuery.concat(` and pp.username = '${req.oidc.user.email}'`);
     }
     findAssignedTasksQuery = findAssignedTasksQuery.concat(`order by st.dueDate asc`);
-    connection.query(findAssignedTasksQuery, function(err, rows, fields) {
-      if (err) throw err;
-      res.json(rows);
-    });
-    connection.end();
+    let db = new database, assignedTaskRows;
+    await db.query(findAssignedTasksQuery)
+    .then(async rows => {
+      assignedTaskRows = rows;
+      for (var i = 0; i < rows.length; i++){
+        if (rows[i] != undefined) {
+          let subtaskQuery=`select * from subTask sbt where sbt.assignedTask = ${rows[i].id}`;
+          await db.query(subtaskQuery)
+          .then(async rows => {
+            let subtasks = [];
+            rows.forEach(element => {
+              subtasks.push({id: element.id, description: element.name});
+             });
+            assignedTaskRows[i].subtasks = subtasks;
+          })
+          .then(rows => {
+              return db.close();
+          })
+          .catch(err => {
+            console.error(err.message);
+          })
+        }
+      }
+    })
+    .then(rows => {
+        return db.close();
+    })
+    .catch(err => {
+      console.error(err.message);
+    })
+    res.json(assignedTaskRows);
   })
-  .post('/assignedTasks', function (req, res) {
+  .post('/assignedTasks',
+      body('assignPerson').optional({nullable: true}).isInt(),
+      body('unassignedTask').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     var inserts = [];
     let statement;
     if (req.body.assignPerson != null && req.body.assignPerson != '') {
@@ -360,7 +431,14 @@ app
     res.status(200);
     res.redirect('/');
  })
- .get('/unassignTask/:id', function (req, res) {
+ .get('/unassignTask/:id', 
+        check('id').notEmpty().isInt(),
+        (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+    }
+
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -390,10 +468,10 @@ app
       res.render('forms/person');
   })
    .post('/person',
-      body('firstName').not().isEmpty().trim().escape(),
-      body('lastName').not().isEmpty().trim().escape(), 
+      body('firstName').notEmpty().trim().escape(),
+      body('lastName').notEmpty().trim().escape(), 
       body('email').optional({checkFalsy: true}).isEmail(),
-      check('birthdate').optional({checkFalsy: true}).isDate(),
+      body('birthdate').optional({checkFalsy: true}).isDate(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -413,12 +491,13 @@ app
     res.redirect('/management');
   })
   .get('/person/:id',
-      check('id').isInt(),
+      check('id').notEmpty().isInt(),
       (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
-        }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -429,7 +508,18 @@ app
     });
     connection.end();
   })
-  .post('/person/:id', (req, res) => {
+  .post('/person/:id',
+      check('id').notEmpty().isInt(),
+      body('firstName').notEmpty().trim().escape(),
+      body('lastName').notEmpty().trim().escape(), 
+      body('email').optional({checkFalsy: true}).isEmail().trim().escape(),
+      body('birthdate').optional({checkFalsy: true}).isDate(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -461,7 +551,14 @@ app
   .get('/taskTypeCategories', (req, res) => {
     res.json({categories: ['CHORE','BILL','APPOINTMENT','OTHER']});
   })
-  .post('/taskType', function (req, res) {
+  .post('/taskType', 
+      body('taskTypeDescription').notEmpty().trim().escape(),
+      body('taskTypeCategory').isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into taskType (category, name) values ('${req.body.taskTypeCategory}','${req.body.taskTypeDescription}')`;
@@ -474,7 +571,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/taskType/:id', (req, res) => {
+  .get('/taskType/:id',
+      check('id').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -485,7 +588,15 @@ app
     });
     connection.end();
   })
-  .post('/taskType/:id', (req, res) => {
+  .post('/taskType/:id',
+      check('id').notEmpty().isInt(),
+      body('taskTypeDescription').notEmpty().trim().escape(),
+      body('taskTypeCategory').notEmpty().isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -504,7 +615,13 @@ app
   .get('/task', (req, res) => {
     res.render('forms/task');
   })
-  .get('/task/:id', (req, res) => {
+  .get('/task/:id',
+      check('id').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -515,7 +632,15 @@ app
     });
     connection.end();
   })
-  .post('/task/:id', (req, res) => {
+  .post('/task/:id', 
+      check('id').notEmpty().isInt(),
+      body('taskType').notEmpty().isInt(),
+      body('taskDescription').notEmpty().trim().escape(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -528,7 +653,14 @@ app
     res.status(200);
     res.redirect(`/management`);
   })
-  .post('/task', function (req, res) {
+  .post('/task',
+      body('taskType').notEmpty().isInt(),
+      body('taskDescription').notEmpty().trim().escape(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into task (type, name) values ('${req.body.taskType}','${req.body.taskDescription}')`;
@@ -541,7 +673,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/tasks', (req, res) => {
+  .get('/tasks', 
+      check('notInTable').optional({nullable: true}).trim().escape(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let notInTable = url.parse(req.url, true).query.notInTable;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -578,8 +716,16 @@ app
   .get('/scheduleTypes', (req, res) => {
     res.json(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']);
   })
-  .post('/taskSchedule', function (req, res) {
-    var scheduleDate = new Date(req.body.scheduleDate);
+  .post('/taskSchedule', 
+      body('scheduleTask').notEmpty().isInt(),
+      body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
+      body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      body('scheduleDate').notEmpty().isDate(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values (${req.body.scheduleTask}, '${req.body.scheduleType}', STR_TO_DATE('${req.body.scheduleTime}','%k:%i'), '${new Date(req.body.scheduleDate).toISOString()}')`;
@@ -592,7 +738,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/scheduledTask/:id', (req, res) => {
+  .get('/scheduledTask/:id', 
+      check('id').isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -603,7 +755,17 @@ app
     });
     connection.end();
   })
-  .post('/taskSchedule/:id', (req, res) => {
+  .post('/taskSchedule/:id',
+      check('id').notEmpty().isInt(),
+      body('scheduleTask').notEmpty().isInt(),
+      body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
+      body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      body('scheduleDate').notEmpty().isDate(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -613,7 +775,13 @@ app
       console.log("1 record updated");
     });
   })
-  .get('/unschedule/:id', function (req, res) {
+  .get('/unschedule/:id',
+      check('id').isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
      let id = req.params.id;
      var connection = mysql.createConnection(process.env.JAWSDB_URL);
      connection.connect();
@@ -639,7 +807,14 @@ app
     });
     connection.end();
   })
-  .post('/location', function (req, res) {
+  .post('/location', 
+      body('locationName').notEmpty().trim().escape(),
+      body('inHouseLocation').optional({nullable: true}).isIn(['on']),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into location (name, inHouse) values ('${req.body.locationName}','${req.body.inHouseLocation ? 1 : 0}')`;
@@ -652,7 +827,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/location/:id', (req, res) => {
+  .get('/location/:id', 
+      check('id').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -663,7 +844,15 @@ app
     });
     connection.end();
   })
-  .post('/location/:id', (req, res) => {
+  .post('/location/:id', 
+      check('id').notEmpty().isInt(),
+      body('locationName').notEmpty().trim().escape(),
+      body('inHouseLocation').optional({nullable: true}).isIn(['on']),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -689,7 +878,13 @@ app
     });
     connection.end();
   })
-  .post('/targetType', function (req, res) {
+  .post('/targetType',
+      body('targetTypeDescription').notEmpty().trim().escape(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into targetType (name) values ('${req.body.targetTypeDescription}')`;
@@ -702,7 +897,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/targetType/:id', (req, res) => {
+  .get('/targetType/:id', 
+      check('id').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -713,7 +914,14 @@ app
     });
     connection.end();
   })
-  .post('/targetType/:id', (req, res) => {
+  .post('/targetType/:id', 
+      check('id').notEmpty().isInt(),
+      body('targetTypeDescription').notEmpty().trim().escape(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -739,7 +947,16 @@ app
     });
     connection.end();
   })
-  .post('/target', function (req, res) {
+  .post('/target',
+      body('targetType').notEmpty().isInt(),
+      body('targetDescription').notEmpty().trim().escape(),
+      body('targetLocation').notEmpty().isInt(),
+      body('targetPerson').optional({checkFalsy: true}).isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     if (req.body.targetPerson != '') {
@@ -756,7 +973,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/target/:id', (req, res) => {
+  .get('/target/:id',
+      check('id').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -767,7 +990,17 @@ app
     });
     connection.end();
   })
-  .post('/target/:id', (req, res) => {
+  .post('/target/:id', 
+      check('id').notEmpty().isInt(),
+      body('targetType').notEmpty().isInt(),
+      body('targetDescription').notEmpty().trim().escape(),
+      body('targetLocation').notEmpty().isInt(),
+      body('targetPerson').optional({nullable: true}).isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -793,7 +1026,14 @@ app
     });
     connection.end();
   })
-  .post('/taskTarget', function (req, res) {
+  .post('/taskTarget', 
+      body('taskTargetTask').notEmpty().isInt(),
+      body('taskTargetTarget').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into taskTarget (task, target) values ('${req.body.taskTargetTask}','${req.body.taskTargetTarget}')`;
@@ -806,18 +1046,32 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/taskTarget/:id', (req, res) => {
+  .get('/taskTarget/:id',
+      check('id').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var findQuery = `select * from taskTarget t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {target: rows[0]});
+      res.render('pages/edit', {taskTarget: rows[0]});
     });
     connection.end();
   })
-  .post('/taskTarget/:id', (req, res) => {
+  .post('/taskTarget/:id',
+      check('id').notEmpty().isInt(),
+      body('taskTargetTask').notEmpty().isInt(),
+      body('taskTargetTarget').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -843,7 +1097,14 @@ app
     });
     connection.end();
   })
-   .post('/taskValue', function (req, res) {
+   .post('/taskValue', 
+      body('taskValueTask').notEmpty().isInt(),
+      body('taskValueValue').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
     var insert = `insert into taskValue (task, value) values ('${req.body.taskValueTask}','${req.body.taskValueValue}')`;
@@ -856,7 +1117,13 @@ app
     res.status(200);
     res.redirect('/management');
   })
-  .get('/taskValue/:id', (req, res) => {
+  .get('/taskValue/:id',
+      check('id').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -867,7 +1134,15 @@ app
     });
     connection.end();
   })
-  .post('/taskValue/:id', (req, res) => {
+  .post('/taskValue/:id',
+      check('id').notEmpty().isInt(),
+      body('taskValueTask').notEmpty().isInt(),
+      body('taskValueValue').notEmpty().isInt(),
+      function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let id = req.params.id;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -887,7 +1162,13 @@ app
     let task = url.parse(req.url, true).query.task;
       res.render('pages/trackSubTasks', {task: task});
     })
-   .get('/subTasks', (req, res) => {
+   .get('/subTasks', 
+      check('task').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let task = url.parse(req.url, true).query.task;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -898,7 +1179,14 @@ app
     });
     connection.end();
   })
-  .post('/addSubTask', (req, res) => {
+  .post('/addSubTask', 
+      check('task').notEmpty().isInt(),
+      body('description').notEmpty().trim().escape(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let task = url.parse(req.url, true).query.task;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
     connection.connect();
@@ -911,7 +1199,14 @@ app
     res.status(200);
     res.redirect('/trackSubTasks?task='+task);
   })
-  .get('/deleteSubTask', (req, res) => {
+  .get('/deleteSubTask', 
+      check('task').notEmpty().isInt(),
+      check('subtask').notEmpty().isInt(),
+      (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     let task = url.parse(req.url, true).query.task;
     let subtask = url.parse(req.url, true).query.subtask;
     var connection = mysql.createConnection(process.env.JAWSDB_URL);
