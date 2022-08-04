@@ -31,6 +31,7 @@
     "pg": "^8.7.3",
     "request-json": "^0.6.5",
     "tabulator-tables": "^5.3.1",
+    "test": "^3.2.1",
     "twilio": "^3.80.0",
     "webauth": "^1.1.0"
   },
