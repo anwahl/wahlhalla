@@ -10,8 +10,9 @@ responsiveLayoutCollapseFormatter:function(data){
 
     return Object.keys(data).length ? list : "";
 },
-layout:"fitDataFill",
 rowContextMenu: rowMenu,
 selectable:true,
 height:"350px",
 responsiveLayout:"collapse",
+layout:"fitDataStretch",
+layoutColumnsOnNewData:true,

@@ -1,27 +1,28 @@
 let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=complete ? '' : 'in' %>complete<%=type%>Table", {
     <%- include ("../partials/tabulatorConfig.ejs") %>
-    layout:"fitDataStretch",
-    layoutColumnsOnNewData:true,
-    rowContextMenu: rowMenu,
     ajaxURL:"/assignedTasks?type=<%=type%>&complete=<%=complete%>&byUser=<%=byUser%>",
     columns:[ 
     {formatter:"responsiveCollapse", width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
-      {headerSort:false, cellClick:function(e, cell){
+      {titleFormatter:"buttonTick", headerSort:false, formatter:"tickCross", formatterParams:{crossElement:false},cellClick:function(e, cell){
             <% if(!complete) { %>
               if (document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex())) {
                 document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex()).remove();
                 var val = new Date(new Date(cell.getRow().getData().dueDate).setHours(new Date(cell.getRow().getData().dueDate).getHours() + 29));
                 val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                             : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : cell.getRow().getElement().style.backgroundColor = null;
+                cell.setValue("false");
               } else {
                 $("#incomplete<%=type%>Table").append("<input type='hidden' id='incompleteAssignedTask"+cell.getRow().getIndex()+"' name='assignedTask' value='"+cell.getRow().getIndex()+"'/>");
                 cell.getRow().getElement().style.backgroundColor = "#9abcea";
+                cell.setValue("true");
               }
-              <% } else { %>
+            <% } else { %>
                 if (document.getElementById("completeAssignedTask"+cell.getRow().getIndex())) {
                   document.getElementById("completeAssignedTask"+cell.getRow().getIndex()).remove();
+                  cell.setValue("false");
                 } else {
                   $("#complete<%=type%>Table").append("<input type='hidden' id='completeAssignedTask"+cell.getRow().getIndex()+"' name='assignedTask' value='"+cell.getRow().getIndex()+"'/>");
+                  cell.setValue("true");
                 }
             <% } %>
         }},
@@ -64,34 +65,35 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
       
       rowFormatter: function(row, e) {
         if (Array.isArray(row.getData().subtasks) && row.getData().subtasks.length > 0) {
-          var holderEl = document.createElement("div");
-          var tableEl = document.createElement("div");
-      
           const id = row.getData().id + '<%=type%><%=complete%>';
-      
-          holderEl.style.boxSizing = "border-box";
-          holderEl.style.padding = "10px 10px 10px 10px";
-          holderEl.style.borderTop = "1px solid #333";
-          holderEl.style.borderBotom = "1px solid #333";
-          holderEl.style.background = "#ddd";
-          holderEl.setAttribute('class', "subTable" + id + "");
-      
-          tableEl.style.border = "1px solid #333";
-          tableEl.setAttribute('class', "subTable" + id + "");
+          var holderEl = document.createElement("div");
+          holderEl.setAttribute('class', "subTableHolder");
+          var tableEl = document.createElement("div");
+          tableEl.setAttribute('class', "subTable");
           tableEl.setAttribute('id', "subTable" + id + "");
-      
           holderEl.appendChild(tableEl);
-      
+          
+          
+
           row.getElement().appendChild(holderEl);
           var <%=type%><%=complete%>subTable = new Tabulator(tableEl, {
+            rowContextMenu: subTableRowMenu,
             layout: "fitColumns",
             data: row.getData().subtasks,
             columns: [   
             {
                 title: "Subtasks",
-                field: "description", headerSort:false}
+                field: "description",
+                cellClick:function(e, cell){
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+              }}
             ]
-          })
+          });
+          <%=type%><%=complete%>subTable.on("tableBuilt", function(){
+            $("#subTable" + row.getData().id + '<%=type%><%=complete%>').hide();
+          });
         }
       },
     });

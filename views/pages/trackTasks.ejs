@@ -6,10 +6,17 @@
   function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
   }
-  
+  var subTableRowMenu = [
+    {
+        label: "Delete subtask",
+        action:function(e,row){
+            window.location.replace('/deleteSubTask?subtask='+row.getData().id);
+      }
+    }];
+
   var rowMenu = [
     {
-      label: "View Subtasks",
+      label: "View/Add Subtasks",
       action:function(e,row){
         window.location.replace('/trackSubTasks?task='+row.getData().id);
       }

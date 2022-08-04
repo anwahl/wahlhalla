@@ -13,7 +13,7 @@ const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_AUTH
 const schedule = require('node-schedule');
 const { body, validationResult, check, param } = require('express-validator');
 const env = process.env.NODE_ENV;
-
+const DB = (env === 'production' ? process.env.JAWSDB_URL : process.env.JAWSDB_SILVER_URL);
 
 
 
@@ -52,7 +52,7 @@ const config = {
 
 class database {
   constructor(config) {
-      this.connection = mysql.createConnection(process.env.JAWSDB_URL );
+      this.connection = mysql.createConnection(DB);
   }
   query(sql, args) {
       return new Promise((resolve, reject) => {
@@ -80,7 +80,7 @@ class database {
 
 if (env === 'production') {
   const job = schedule.scheduleJob('30 13 * * *', function(){
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
       connection.connect();
       var findAssignedTasksQuery = `SELECT ast.id, pp.username as username, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
       tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.dueDate, st.timeOfDay FROM assignedTask ast join scheduledtask st on ast.scheduledTask = st.id 
@@ -172,7 +172,7 @@ app
     } else {
       ids.push(req.body.assignedTask);
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     connection.query( `update assignedTask set complete = ${complete} where assignedTask.id in (${ids})`);
     connection.end();
@@ -224,30 +224,34 @@ app
              completed.push(rows.name);
              insertValues.push([rows.task, rows.type, rows.timeOfDay, newDate]);
          }
-          let insert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values ?`;
-          return db.query({
-            sql: insert,
-            values: [insertValues]
+         if (insertValues.length > 0) {
+            let insert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values ?`;
+            return db.query({
+              sql: insert,
+              values: [insertValues]
             });
+          }
       } ).then( rows => {
-        newRows = rows;
-        let insertValues = [], personIds = [], j=0;
-        if (Array.isArray(oldRows)){
-          oldRows.forEach(element => {
-            personIds.push((element.person ? element.person : null));
-          });
-         } else {
-          personIds.push((oldRows.person ? oldRows.person : null));
-         }
-        for (var i = rows.insertId; i < rows.insertId + rows.affectedRows; i++) {
-          insertValues.push([i, personIds[j]])
-          j++;
-        }
-        let insert = `insert into assignedTask (scheduledTask, person) values ?`;
-          return db.query({
-            sql: insert,
-            values: [insertValues]
+        if (rows != undefined) {
+          newRows = rows;
+          let insertValues = [], personIds = [], j=0;
+          if (Array.isArray(oldRows)){
+            oldRows.forEach(element => {
+              personIds.push((element.person ? element.person : null));
             });
+          } else {
+            personIds.push((oldRows.person ? oldRows.person : null));
+          }
+          for (var i = rows.insertId; i < rows.insertId + rows.affectedRows; i++) {
+            insertValues.push([i, personIds[j]])
+            j++;
+          }
+          let insert = `insert into assignedTask (scheduledTask, person) values ?`;
+            return db.query({
+              sql: insert,
+              values: [insertValues]
+              });
+        }
       }).then(rows =>{
         if (env === 'production') {
           var message = `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date(new Date().setHours((new Date().getHours() -6)))}`;
@@ -274,7 +278,7 @@ app
       }
      let id = req.params.id;
      let table = req.params.table;
-     var connection = mysql.createConnection(process.env.JAWSDB_URL);
+     var connection = mysql.createConnection(DB);
      connection.connect();
      var update = `delete from ${table} where id = ${id} `;
      connection.query(update, function(err, rows, fields) {
@@ -340,7 +344,7 @@ app
       check('complete').notEmpty().isIn(['0','1']), 
       check('byUser').optional({nullable: true}).trim().escape(),
       check('type').notEmpty().isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
-      async function (req, res) {
+      function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -358,29 +362,41 @@ app
       findAssignedTasksQuery = findAssignedTasksQuery.concat(` and pp.username = '${req.oidc.user.email}'`);
     }
     findAssignedTasksQuery = findAssignedTasksQuery.concat(`order by st.dueDate asc`);
-    let db = new database, assignedTaskRows;
-    await db.query(findAssignedTasksQuery)
-    .then(async rows => {
-      assignedTaskRows = rows;
-      for (var i = 0; i < rows.length; i++){
-        if (rows[i] != undefined) {
-          let subtaskQuery=`select * from subTask sbt where sbt.assignedTask = ${rows[i].id}`;
-          await db.query(subtaskQuery)
-          .then(async rows => {
-            let subtasks = [];
-            rows.forEach(element => {
-              subtasks.push({id: element.id, description: element.name});
-             });
-            assignedTaskRows[i].subtasks = subtasks;
-          })
-          .then(rows => {
-              return db.close();
-          })
-          .catch(err => {
-            console.error(err.message);
-          })
-        }
+    let db = new database, assignedTaskRows, subtaskRows = [];
+    db.query(findAssignedTasksQuery)
+    .then(rows => {
+      assignedTaskRows = rows, promises = [];
+      for (var i = 0; i < assignedTaskRows.length; i++) {
+        let subtaskQuery=`select * from subTask sbt where sbt.assignedTask = ${assignedTaskRows[i].id}`;
+        promises.push(db.query(subtaskQuery));
       }
+      Promise.all(promises)
+      .then(rows  => {
+        subtaskRows.push(rows);
+      })
+      .then(async () => {
+          for (var i = 0; i < assignedTaskRows.length; i++) {
+            assignedTaskRows[i].subtasks = [];
+             for (var j = 0; j  < subtaskRows.length; j++) {
+              if (subtaskRows[j].length > 0) {
+                  for (var k = 0; k  < subtaskRows[j].length; k++) {
+                    if (subtaskRows[j][k].length > 0) {
+                      if (assignedTaskRows[i].id == subtaskRows[j][k][0].assignedtask) {
+                      for (var l = 0; l  < subtaskRows[j][k].length; l++) {
+                        assignedTaskRows[i].subtasks.push({id:subtaskRows[j][k][l].id,description:subtaskRows[j][k][l].name});
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          res.json(assignedTaskRows);
+          await db.close();
+      })
+      .catch(err => {
+        console.error(err.message);
+      })
     })
     .then(rows => {
         return db.close();
@@ -388,7 +404,6 @@ app
     .catch(err => {
       console.error(err.message);
     })
-    res.json(assignedTaskRows);
   })
   .post('/assignedTasks',
       body('assignPerson').optional({nullable: true}).isInt(),
@@ -420,7 +435,7 @@ app
       }
       statement = 'INSERT into assignedTask (scheduledTask) VALUES ?';
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     connection.query({
       sql: statement,
@@ -440,7 +455,7 @@ app
     }
 
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `delete from assignedtask where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -455,7 +470,7 @@ app
    * Person
    */
    .get('/persons', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findPersonsQuery = `select * from person p`
     connection.query(findPersonsQuery, function(err, rows, fields) {
@@ -478,7 +493,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
 
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into person (firstName, lastName, birthdate, username) values ('${req.body.firstName}','${req.body.lastName}','${req.body.birthdate}','${req.body.email}')`;
     connection.query(insert, function (err, result) {
@@ -499,7 +514,7 @@ app
     }
 
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from person t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -521,7 +536,7 @@ app
     }
 
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update person set firstName = '${req.body.firstName}', lastName = '${req.body.lastName}', birthdate = '${req.body.birthdate}', username = '${req.body.email}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -539,7 +554,7 @@ app
     res.render('forms/taskType');
   })
   .get('/taskTypes', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTaskTypesQuery = `select * from taskType t`
     connection.query(findTaskTypesQuery, function(err, rows, fields) {
@@ -559,7 +574,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskType (category, name) values ('${req.body.taskTypeCategory}','${req.body.taskTypeDescription}')`;
     connection.query(insert, function (err, result) {
@@ -579,7 +594,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTaskQuery = `select * from taskType t where t.id = ${id}`
     connection.query(findTaskQuery, function(err, rows, fields) {
@@ -598,7 +613,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update taskType set category = '${req.body.taskTypeCategory}', name = '${req.body.taskTypeDescription}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -623,7 +638,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTaskQuery = `select * from task t where t.id = ${id}`
     connection.query(findTaskQuery, function(err, rows, fields) {
@@ -642,7 +657,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update task set type = '${req.body.taskType}', name = '${req.body.taskDescription}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -661,7 +676,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into task (type, name) values ('${req.body.taskType}','${req.body.taskDescription}')`;
     connection.query(insert, function (err, result) {
@@ -681,7 +696,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let notInTable = url.parse(req.url, true).query.notInTable;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTasksQuery = `select t.id, t.name, t.type, tt.name as typeName from task t join taskType tt on t.type = tt.id`
     if (notInTable != null && notInTable != '') {
@@ -697,7 +712,7 @@ app
    * Scheduled Tasks
    */
   .get('/scheduledTasks', (req,res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `SELECT st.id, st.dueDate, tst.category, tst.name as taskTypeName, t.name as taskName, l.name as locationName, p.firstName as personName, 
     tty.name as targetTypeName, tgt.name as targetName, st.\`type\` as scheduleType, st.timeOfDay FROM scheduledtask st JOIN task t ON t.id = st.task 
@@ -726,7 +741,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values (${req.body.scheduleTask}, '${req.body.scheduleType}', STR_TO_DATE('${req.body.scheduleTime}','%k:%i'), '${new Date(req.body.scheduleDate).toISOString()}')`;
     connection.query(insert, function (err, result) {
@@ -746,7 +761,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from scheduledTask t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -767,7 +782,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update scheduledTask set task = '${req.body.scheduleTask}', type = '${req.body.scheduleType}', timeOfDay = STR_TO_DATE('${req.body.scheduleTime}','%k:%i'), dueDate = '${new Date(req.body.scheduleDate).toISOString()}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -783,7 +798,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
      let id = req.params.id;
-     var connection = mysql.createConnection(process.env.JAWSDB_URL);
+     var connection = mysql.createConnection(DB);
      connection.connect();
      var update = `delete from scheduledTask where id = ${id} `;
      connection.query(update, function(err, rows, fields) {
@@ -798,7 +813,7 @@ app
    * Location
    */
    .get('/locations', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findLocationsQuery = `select * from location l`
     connection.query(findLocationsQuery, function(err, rows, fields) {
@@ -815,7 +830,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into location (name, inHouse) values ('${req.body.locationName}','${req.body.inHouseLocation ? 1 : 0}')`;
     connection.query(insert, function (err, result) {
@@ -835,7 +850,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from location t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -854,7 +869,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update location set name = '${req.body.locationName}', inHouse = '${req.body.inHouseLocation ? 1 : 0}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -869,7 +884,7 @@ app
    * Target Type
    */
    .get('/targetTypes', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTargetTypesQuery = `select * from targetType t`
     connection.query(findTargetTypesQuery, function(err, rows, fields) {
@@ -885,7 +900,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into targetType (name) values ('${req.body.targetTypeDescription}')`;
     connection.query(insert, function (err, result) {
@@ -905,7 +920,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from targetType t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -923,7 +938,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update targetType set name = '${req.body.targetTypeDescription}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -938,7 +953,7 @@ app
    * Target
    */
    .get('/targets', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findTargetsQuery = `select t.id, t.name, t.type, tt.name as typeName, t.location, l.name as locationName, t.person, p.firstName from target t join targettype tt on t.type = tt.id join location l on t.location = l.id left join person p on t.person = p.id`
     connection.query(findTargetsQuery, function(err, rows, fields) {
@@ -957,7 +972,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     if (req.body.targetPerson != '') {
       var insert = `insert into target (name, type, location, person) values ('${req.body.targetDescription}','${req.body.targetType}','${req.body.targetLocation}', '${req.body.targetPerson}')`;
@@ -981,7 +996,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from target t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1002,7 +1017,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update target set name = '${req.body.targetDescription}', type = '${req.body.targetType}', location = '${req.body.targetLocation}', person = ${req.body.targetPerson ? req.body.targetPerson : null} where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -1017,7 +1032,7 @@ app
    * Task Target
    */
    .get('/taskTargets', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select t.id, t.task, tsk.name as taskName, t.target, tgt.name as targetName from taskTarget t join task tsk on t.task = tsk.id join target tgt on t.target = tgt.id`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1034,7 +1049,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskTarget (task, target) values ('${req.body.taskTargetTask}','${req.body.taskTargetTarget}')`;
     connection.query(insert, function (err, result) {
@@ -1054,7 +1069,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from taskTarget t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1073,7 +1088,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update taskTarget set task = '${req.body.taskTargetTask}', target = '${req.body.taskTargetTarget}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -1088,7 +1103,7 @@ app
    * Task Value
    */
    .get('/taskValues', (req, res) => {
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select t.id, t.task, tsk.name, t.value from taskValue t join task tsk on t.task = tsk.id`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1105,7 +1120,7 @@ app
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskValue (task, value) values ('${req.body.taskValueTask}','${req.body.taskValueValue}')`;
     connection.query(insert, function (err, result) {
@@ -1125,7 +1140,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from taskValue t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1144,7 +1159,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let id = req.params.id;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var update = `update taskValue set task = '${req.body.taskValueTask}', value = '${req.body.taskValueValue}' where id = ${id} `;
     connection.query(update, function(err, rows, fields) {
@@ -1170,7 +1185,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let task = url.parse(req.url, true).query.task;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from subtask st where st.assignedtask = ${task}`
     connection.query(findQuery, function(err, rows, fields) {
@@ -1188,7 +1203,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let task = url.parse(req.url, true).query.task;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into subtask (assignedtask, name) values ('${task}','${req.body.description}')`;
     connection.query(insert, function (err, result) {
@@ -1200,7 +1215,7 @@ app
     res.redirect('/trackSubTasks?task='+task);
   })
   .get('/deleteSubTask', 
-      check('task').notEmpty().isInt(),
+      check('task').optional({checkFalsy:true}).isInt(),
       check('subtask').notEmpty().isInt(),
       (req, res) => {
     const errors = validationResult(req);
@@ -1209,7 +1224,7 @@ app
     }
     let task = url.parse(req.url, true).query.task;
     let subtask = url.parse(req.url, true).query.subtask;
-    var connection = mysql.createConnection(process.env.JAWSDB_URL);
+    var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `delete from subtask where id = ${subtask}`;
     connection.query(insert, function (err, result) {
@@ -1218,9 +1233,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect('/trackSubTasks?task='+task);
+    if (task == null || task == ''){
+      res.redirect('/');
+    } else {
+      res.redirect('/trackSubTasks?task='+task);
+    }
   })
 
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
-
-/* Guys, what am I doing. I don't know how to node.js, please send help. */
