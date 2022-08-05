@@ -78,11 +78,11 @@ input[type=checkbox], input[type=radio] {
 @media (min-width: 500px){
   .container {
     width: 99%;
-    font-size: 24px;
+    font-size: 18px;
     padding: 2px;
   }
   .tabulator {
-    font-size: 24px;
+    font-size: 20px;
   }
 }
 
@@ -90,11 +90,11 @@ input[type=checkbox], input[type=radio] {
 @media (min-width: 1200px) {
   .container {
     width: 95%;
-    font-size: 18px;
+    font-size: 16px;
     padding: 20px;
   }
   .tabulator {
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 

@@ -1,3 +1,4 @@
+
 let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=complete ? '' : 'in' %>complete<%=type%>Table", {
     <%- include ("../partials/tabulatorConfig.ejs") %>
     ajaxURL:"/assignedTasks?type=<%=type%>&complete=<%=complete%>&byUser=<%=byUser%>",
@@ -107,3 +108,7 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
   
     
   <%- include ("../partials/filterScript.ejs", { id : (complete ? '' : 'in') + 'complete'+type}) %>
+
+  window.addEventListener('resize', function(){
+    <%=complete ? '' : 'in' %>complete<%=type%>Table.redraw();
+  });
