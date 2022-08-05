@@ -40,20 +40,21 @@
   .form-input {
     display: inline-block;
     margin-top: 10px;
+    width: 100px;
   }
   .form-label {
     float: left;
     clear: left;
-    width: 100px;
+    width: 75px;
     text-align: right;
-    margin-right:20px;
+    margin-right:35px;
     margin-top: 10px;
   }
   .smt-btn {
     display: inline-block;
   }
   .checkbox-grp {
-    display: inline-block;
+    display: grid;
   }
   .list-grp {
     display: inline-block;
@@ -77,7 +78,11 @@
   
   input[type=checkbox], input[type=radio] {
     margin: 5px;
+    width: 20px;
   }
+.radio-el {
+    display: flex;
+}
   .btn-primary {
     margin: 10px;
   }

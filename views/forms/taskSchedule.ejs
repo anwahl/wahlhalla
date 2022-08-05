@@ -16,12 +16,12 @@
       data.forEach(element => {
         <% if (locals.scheduledTask) { %>
             if (element != '<%=scheduledTask.type%>') { 
-                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+                $("#scheduleTypes").append("<span class='radio-el'><input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required><span class='radio-lbl'>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</span></input></span>");
             } else {
-                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" checked value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+                $("#scheduleTypes").append("<span class='radio-el'><input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" checked value=\"" + element + "\" required><span class='radio-lbl'>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</span></input></span>");
             }
         <% } else { %>
-                $("#scheduleTypes").append("<input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</input>");
+                $("#scheduleTypes").append("<span class='radio-el'><input type=\"radio\" class=\"form-inline input-sm form-input form-input-radio\" name=\"scheduleType\" value=\"" + element + "\" required><span class='radio-lbl'>" + element.charAt(0).toUpperCase() + element.substr(1).toLowerCase() + "</span></input></span>");
         <% } %>
 
 
@@ -36,7 +36,7 @@
                 <option value="">...</option>
             </select>
         <br/>
-        <label class="form-label" for="scheduleType">Type:</label><span id="scheduleTypes"></span>
+        <label class="form-label" for="scheduleType">Type:</label><span id="scheduleTypes" class="checkbox-grp"></span>
         <br/>
         <label class="form-label" for="scheduleDate">Date:</label><input class="form-inline input-sm form-input " placeholder="Date" name="scheduleDate" type="date" id="scheduleDate" value="<%= locals.scheduledTask ? new Date(scheduledTask.dueDate).getFullYear() +'-' + ('0' + (new Date(scheduledTask.dueDate).getMonth() +1).toString()).slice(-2) + '-' + ('0' + (new Date(scheduledTask.dueDate).getDate()).toString()).slice(-2): '' %>" required/>
         <br/>
