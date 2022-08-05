@@ -4,8 +4,8 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
     <%- include ("../partials/tabulatorConfig.ejs") %>
     ajaxURL:"/assignedTasks?type=<%=type%>&complete=<%=complete%>&byUser=<%=byUser%>",
     columns:[ 
-    {formatter:"responsiveCollapse", width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
-      {titleFormatter:"buttonTick", headerSort:false, formatter:"tickCross", formatterParams:{crossElement:false},cellClick:function(e, cell){
+    {<% if (!mobile) { %>formatter:"responsiveCollapse", <% } %>width:50, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
+      {titleFormatter:"buttonTick",responsive:0, headerSort:false, formatter:"tickCross", formatterParams:{crossElement:false},cellClick:function(e, cell){
             <% if(!complete) { %>
               if (document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex())) {
                 document.getElementById("incompleteAssignedTask"+cell.getRow().getIndex()).remove();
@@ -52,7 +52,7 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
       { title: "Time Information",
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
-          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:1, formatter:function(cell, formatterParams, onRendered){
+          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
                 var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                 <% if(!complete) { %>
                   val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"

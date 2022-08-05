@@ -37,7 +37,7 @@
     <%- include ("../partials/tabulatorConfig.ejs") %>
     ajaxURL:"/scheduledTasks",
     columns:[ 
-    {formatter:"responsiveCollapse", width:75, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
+    {<% if (!mobile) { %>formatter:"responsiveCollapse", <% } %> width:75, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
     { title: "Location Information",
         columns: [  
         {title:"Target", field:"targetName", width:200, widthGrow:3,responsive:1, clickPopup:function(e, cell){
@@ -64,7 +64,7 @@
       { title: "Time Information",
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
-          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:1, formatter:function(cell, formatterParams, onRendered){
+          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
                   var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                  val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';

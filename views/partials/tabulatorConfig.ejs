@@ -1,4 +1,4 @@
-responsiveLayoutCollapseFormatter:function(data){
+<% if (!mobile) { %>responsiveLayoutCollapseFormatter:function(data){
     //data - an array of objects containing the column title and value for each cell
     var list = document.createElement("ul");
 
@@ -9,10 +9,10 @@ responsiveLayoutCollapseFormatter:function(data){
     });
 
     return Object.keys(data).length ? list : "";
-},
+}, <% } %>
 rowContextMenu: rowMenu,
 selectable:true,
 height:"350px",
-responsiveLayout:"collapse",
+<% if (!mobile) { %>responsiveLayout:"collapse", <% } else { %>responsiveLayout:"hide", <% } %>
 layout:"fitDataStretch",
 layoutColumnsOnNewData:true,
