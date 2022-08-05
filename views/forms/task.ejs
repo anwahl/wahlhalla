@@ -15,7 +15,7 @@
 </script>
 <div class="container" id="taskForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add/Edit Task</h3>
-    <form action="/task/<%= locals.task ? task.id : '' %>" method="POST">
+    <form action="/task/<%= locals.task ? task.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="taskType">Type:</label>
             <select class="form-inline input-sm form-input " id="taskType" name="taskType" required>
                 <option value="">...</option>

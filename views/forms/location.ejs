@@ -1,6 +1,6 @@
 <div class="container" id="locationForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add Location</h3>
-    <form action="/location/<%=locals.location ? location.id : ''%>" method="POST">
+    <form action="/location/<%=locals.location ? location.id : ''%><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="locationName">Name:</label><input class="form-inline input-sm form-input " placeholder="Name" name="locationName" id="locationName" value="<%=locals.location ? location.name : ''%>" required/>
         <br/>
         <label class="form-label" for="inHouseLocation">In-House:</label><input class="form-inline input-sm form-input " type="checkbox"  name="inHouseLocation" id="inHouseLocation" <% if (locals.location && location.inHouse == 1) {%>checked<%}%> />

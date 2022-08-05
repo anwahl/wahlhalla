@@ -1,6 +1,6 @@
 <div class="container" id="targetTypeForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add/Edit Target Type</h3>
-    <form action="/targetType/<%= locals.targetType ? targetType.id : '' %>" method="POST">
+    <form action="/targetType/<%= locals.targetType ? targetType.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="targetTypeDescription">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="targetTypeDescription" id="targetTypeDescription" value="<%= locals.targetType ? targetType.name : '' %>" required/>
         <br/>
         <button class="smt-btn btn btn-primary" type="submit">Submit</button>

@@ -41,7 +41,7 @@
 </script>
 <div class="container" id="targetForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add Target</h3>
-    <form action="/target/<%= locals.target ? target.id : '' %>" method="POST">
+    <form action="/target/<%= locals.target ? target.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="targetLocation">Location:</label>
             <select class="form-inline input-sm form-input " id="targetLocation" name="targetLocation" required>
                 <option value="">...</option>

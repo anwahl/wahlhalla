@@ -149,34 +149,51 @@ app
   .set('trust proxy', true)
   .get('/', 
       check('byUser').optional({nullable: true}).trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
     let byUser = url.parse(req.url, true).query.byUser;
+    let mobile = url.parse(req.url, true).query.mobile;
     
     res.status(200);
-    res.render('pages/index', {byUser: byUser});
+    res.render('pages/index', {byUser: byUser, mobile: mobile});
   })
-  .get('/management', (req, res) => {
-     res.render('pages/management');
+  .get('/management', 
+      check('mobile').optional({nullable: true}).trim().escape(),
+      (req,res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    let mobile = url.parse(req.url, true).query.mobile;
+     res.render('pages/management', {mobile: mobile});
  })
  /**
   * Task Tracking
   */
- .get('/trackTasks', (req,res) => {
-   res.render('pages/trackTasks');
+ .get('/trackTasks', 
+      check('mobile').optional({nullable: true}).trim().escape(),
+      (req,res) => {
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  let byUser = url.parse(req.url, true).query.byUser;
+   res.render('pages/trackTasks', {mobile: mobile});
  })
  .post('/completeTasks', 
       check('complete').notEmpty().isIn(['0','1']),
       body('assignedTask').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req,res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    let mobile = url.parse(req.url, true).query.mobile;
     let complete = url.parse(req.url, true).query.complete;
     var ids = [];
     if (Array.isArray(req.body.assignedTask)){
@@ -280,16 +297,22 @@ app
        });
     }
     res.status(200);
-    res.redirect('/');
+    if (mobile) {
+      res.redirect('/?mobile=true');
+    } else {
+      res.redirect('/');
+    }
   })
   .get('/delete/:table/:id',
         check('table').notEmpty().isIn(['person','taskType','task','location','targetType','target','taskTarget','taskValue','scheduledTask','assignedTask','subTask']),
         check('id').notEmpty().isInt(),
+        check('mobile').optional({nullable: true}).trim().escape(),
         (req, res) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
+     let mobile = url.parse(req.url, true).query.mobile;
      let id = req.params.id;
      let table = req.params.table;
      var connection = mysql.createConnection(DB);
@@ -301,13 +324,24 @@ app
      });
      connection.end();
      res.status(200);
-     res.redirect('/management');
+     if (mobile) {
+       res.redirect('/management?mobile=true');
+     } else {
+       res.redirect('/management');
+     }
   })
   /**
   * Task Workflow
   */
-  .get('/workflow', (req,res) => {
-    res.render('pages/workflow');
+  .get('/workflow',
+      check('mobile').optional({nullable: true}).trim().escape(),
+      (req,res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    let mobile = url.parse(req.url, true).query.mobile;
+    res.render('pages/workflow', {mobile: mobile});
   })
   .post('/workflow', 
         body('taskType').notEmpty().isInt(),
@@ -316,12 +350,14 @@ app
         body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
         body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
         body('scheduleDate').notEmpty().isDate(),
+        check('mobile').optional({nullable: true}).trim().escape(),
         async (req,res) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
-
+      
+       let mobile = url.parse(req.url, true).query.mobile;
       let scheduleDate = new Date(req.body.scheduleDate);
       let taskRow, scheduledTaskRow;
       let db = new database;
@@ -349,7 +385,7 @@ app
       })
       
       res.status(200);
-      res.redirect('/workflow');
+      res.redirect('/workflow', {mobile: mobile});
   })
  /**
   * Assigned Task
@@ -422,12 +458,15 @@ app
   .post('/assignedTasks',
       body('assignPerson').optional({nullable: true}).isInt(),
       body('unassignedTask').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
     
+    let mobile = url.parse(req.url, true).query.mobile;
+
     var inserts = [];
     let statement;
     if (req.body.assignPerson != null && req.body.assignPerson != '') {
@@ -458,16 +497,21 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/');
+    if (mobile) {
+      res.redirect('/?mobile=true');
+    } else {
+      res.redirect('/');
+    }
  })
  .get('/unassignTask/:id', 
         check('id').notEmpty().isInt(),
+        check('mobile').optional({nullable: true}).trim().escape(),
         (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
     }
-
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -478,7 +522,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect('/');
+    if (mobile) {
+      res.redirect('/?mobile=true');
+    } else {
+      res.redirect('/');
+    }
  })
   /** 
    * Person
@@ -493,19 +541,18 @@ app
     });
     connection.end();
   })
-   .get('/person', (req, res) => {
-      res.render('forms/person');
-  })
    .post('/person',
       body('firstName').notEmpty().trim().escape(),
       body('lastName').notEmpty().trim().escape(), 
       body('email').optional({checkFalsy: true}).isEmail(),
       body('birthdate').optional({checkFalsy: true}).isDate(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
 
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -517,23 +564,29 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/person/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from person t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {person: rows[0]});
+      res.render('pages/edit', {person: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -543,11 +596,13 @@ app
       body('lastName').notEmpty().trim().escape(), 
       body('email').optional({checkFalsy: true}).isEmail().trim().escape(),
       body('birthdate').optional({checkFalsy: true}).isDate(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
 
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
@@ -559,14 +614,15 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * TaskType
    */
-  .get('/taskType', (req, res) => {
-    res.render('forms/taskType');
-  })
   .get('/taskTypes', (req, res) => {
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -583,11 +639,13 @@ app
   .post('/taskType', 
       body('taskTypeDescription').notEmpty().trim().escape(),
       body('taskTypeCategory').isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskType (category, name) values ('${req.body.taskTypeCategory}','${req.body.taskTypeDescription}')`;
@@ -598,22 +656,28 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/taskType/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findTaskQuery = `select * from taskType t where t.id = ${id}`
     connection.query(findTaskQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {taskType: rows[0]});
+      res.render('pages/edit', {taskType: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -621,11 +685,13 @@ app
       check('id').notEmpty().isInt(),
       body('taskTypeDescription').notEmpty().trim().escape(),
       body('taskTypeCategory').notEmpty().isIn(['CHORE','BILL','APPOINTMENT','OTHER']),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -636,28 +702,31 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /** 
    * Task 
    * */
-  .get('/task', (req, res) => {
-    res.render('forms/task');
-  })
   .get('/task/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findTaskQuery = `select * from task t where t.id = ${id}`
     connection.query(findTaskQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {task: rows[0]});
+      res.render('pages/edit', {task: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -665,11 +734,13 @@ app
       check('id').notEmpty().isInt(),
       body('taskType').notEmpty().isInt(),
       body('taskDescription').notEmpty().trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -680,16 +751,22 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .post('/task',
       body('taskType').notEmpty().isInt(),
       body('taskDescription').notEmpty().trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into task (type, name) values ('${req.body.taskType}','${req.body.taskDescription}')`;
@@ -700,7 +777,11 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/tasks', 
       check('notInTable').optional({nullable: true}).trim().escape(),
@@ -739,9 +820,6 @@ app
     });
     connection.end();
   })
-  .get('/scheduledTask', (req, res) => {
-    res.render('forms/taskSchedule');
-  })
   .get('/scheduleTypes', (req, res) => {
     res.json(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']);
   })
@@ -750,11 +828,13 @@ app
       body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
       body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       body('scheduleDate').notEmpty().isDate(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into scheduledTask (task, type, timeOfDay, dueDate) values (${req.body.scheduleTask}, '${req.body.scheduleType}', STR_TO_DATE('${req.body.scheduleTime}','%k:%i'), '${new Date(req.body.scheduleDate).toISOString()}')`;
@@ -765,22 +845,28 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/scheduledTask/:id', 
       check('id').isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from scheduledTask t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {scheduledTask: rows[0]});
+      res.render('pages/edit', {scheduledTask: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -790,11 +876,13 @@ app
       body('scheduleType').notEmpty().isIn(['YEARLY','MONTHLY','WEEKLY','DAILY','STANDALONE']),
       body('scheduleTime').optional({checkFalsy: true}).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       body('scheduleDate').notEmpty().isDate(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -803,14 +891,24 @@ app
       if (err) throw err;
       console.log("1 record updated");
     });
+    connection.end();
+    
+    res.status(200);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/unschedule/:id',
       check('id').isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
      let id = req.params.id;
      var connection = mysql.createConnection(DB);
      connection.connect();
@@ -821,7 +919,11 @@ app
      });
      connection.end();
      res.status(200);
-     res.redirect('/');
+     if (mobile) {
+       res.redirect('/?mobile=true');
+     } else {
+       res.redirect('/');
+     }
   })
   /**
    * Location
@@ -839,11 +941,13 @@ app
   .post('/location', 
       body('locationName').notEmpty().trim().escape(),
       body('inHouseLocation').optional({nullable: true}).isIn(['on']),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into location (name, inHouse) values ('${req.body.locationName}','${req.body.inHouseLocation ? 1 : 0}')`;
@@ -854,22 +958,28 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/location/:id', 
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from location t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {location: rows[0]});
+      res.render('pages/edit', {location: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -877,11 +987,13 @@ app
       check('id').notEmpty().isInt(),
       body('locationName').notEmpty().trim().escape(),
       body('inHouseLocation').optional({nullable: true}).isIn(['on']),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -892,7 +1004,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * Target Type
@@ -909,11 +1025,13 @@ app
   })
   .post('/targetType',
       body('targetTypeDescription').notEmpty().trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into targetType (name) values ('${req.body.targetTypeDescription}')`;
@@ -924,33 +1042,41 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/targetType/:id', 
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from targetType t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {targetType: rows[0]});
+      res.render('pages/edit', {targetType: rows[0], mobile: mobile});
     });
     connection.end();
   })
   .post('/targetType/:id', 
       check('id').notEmpty().isInt(),
       body('targetTypeDescription').notEmpty().trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -961,7 +1087,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * Target
@@ -981,11 +1111,13 @@ app
       body('targetDescription').notEmpty().trim().escape(),
       body('targetLocation').notEmpty().isInt(),
       body('targetPerson').optional({checkFalsy: true}).isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     if (req.body.targetPerson != '') {
@@ -1000,22 +1132,28 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/target/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from target t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {target: rows[0]});
+      res.render('pages/edit', {target: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -1025,11 +1163,13 @@ app
       body('targetDescription').notEmpty().trim().escape(),
       body('targetLocation').notEmpty().isInt(),
       body('targetPerson').optional({nullable: true}).isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -1040,7 +1180,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * Task Target
@@ -1058,11 +1202,13 @@ app
   .post('/taskTarget', 
       body('taskTargetTask').notEmpty().isInt(),
       body('taskTargetTarget').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskTarget (task, target) values ('${req.body.taskTargetTask}','${req.body.taskTargetTarget}')`;
@@ -1073,22 +1219,28 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/taskTarget/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from taskTarget t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {taskTarget: rows[0]});
+      res.render('pages/edit', {taskTarget: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -1096,11 +1248,13 @@ app
       check('id').notEmpty().isInt(),
       body('taskTargetTask').notEmpty().isInt(),
       body('taskTargetTarget').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -1111,7 +1265,11 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * Task Value
@@ -1129,11 +1287,13 @@ app
    .post('/taskValue', 
       body('taskValueTask').notEmpty().isInt(),
       body('taskValueValue').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var insert = `insert into taskValue (task, value) values ('${req.body.taskValueTask}','${req.body.taskValueValue}')`;
@@ -1144,22 +1304,29 @@ app
     connection.end();
     
     res.status(200);
-    res.redirect('/management');
+    res.status(200);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   .get('/taskValue/:id',
       check('id').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
     var findQuery = `select * from taskValue t where t.id = ${id}`
     connection.query(findQuery, function(err, rows, fields) {
       if (err) throw err;
-      res.render('pages/edit', {taskValue: rows[0]});
+      res.render('pages/edit', {taskValue: rows[0], mobile: mobile});
     });
     connection.end();
   })
@@ -1167,11 +1334,13 @@ app
       check('id').notEmpty().isInt(),
       body('taskValueTask').notEmpty().isInt(),
       body('taskValueValue').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let id = req.params.id;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -1182,14 +1351,26 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect(`/management`);
+    res.status(200);
+    if (mobile) {
+      res.redirect('/management?mobile=true');
+    } else {
+      res.redirect('/management');
+    }
   })
   /**
    * Sub Task
    */
-   .get('/trackSubTasks', (req, res) => {
+   .get('/trackSubTasks', 
+        check('mobile').optional({nullable: true}).trim().escape(),
+        (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    let mobile = url.parse(req.url, true).query.mobile;
     let task = url.parse(req.url, true).query.task;
-      res.render('pages/trackSubTasks', {task: task});
+      res.render('pages/trackSubTasks', {task: task, mobile: mobile});
     })
    .get('/subTasks', 
       check('task').notEmpty().isInt(),
@@ -1211,11 +1392,13 @@ app
   .post('/addSubTask', 
       check('task').notEmpty().isInt(),
       body('description').notEmpty().trim().escape(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let task = url.parse(req.url, true).query.task;
     var connection = mysql.createConnection(DB);
     connection.connect();
@@ -1226,16 +1409,23 @@ app
     });
     connection.end();
     res.status(200);
-    res.redirect('/trackSubTasks?task='+task);
+    if (mobile) {
+      res.redirect('/trackSubTasks?task='+task+'&mobile=true');
+    } else {
+      res.redirect('/trackSubTasks?task='+task);
+    }
+   
   })
   .get('/deleteSubTask', 
       check('task').optional({checkFalsy:true}).isInt(),
       check('subtask').notEmpty().isInt(),
+      check('mobile').optional({nullable: true}).trim().escape(),
       (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    let mobile = url.parse(req.url, true).query.mobile;
     let task = url.parse(req.url, true).query.task;
     let subtask = url.parse(req.url, true).query.subtask;
     var connection = mysql.createConnection(DB);
@@ -1247,10 +1437,19 @@ app
     });
     connection.end();
     res.status(200);
-    if (task == null || task == ''){
-      res.redirect('/');
+    
+    if (mobile) {
+      if (task == null || task == ''){
+        res.redirect('/?mobile=true');
+      } else {
+        res.redirect('/trackSubTasks?task='+task+'&mobile=true');
+      }
     } else {
-      res.redirect('/trackSubTasks?task='+task);
+      if (task == null || task == ''){
+        res.redirect('/');
+      } else {
+        res.redirect('/trackSubTasks?task='+task);
+      }
     }
   })
 

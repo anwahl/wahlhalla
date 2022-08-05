@@ -1,6 +1,6 @@
 <div class="container" id="personForm">
     <h3><span class="glyphicon glyphicon-user"></span> Add Person</h3>
-    <form action="/person/<%= locals.person ? person.id : '' %>" method="POST">
+    <form action="/person/<%= locals.person ? person.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="firstName">Name:</label><input class="form-inline input-sm form-input " placeholder="First Name" name="firstName" id="firstName" value="<%= locals.person ? person.firstName : '' %>" required/>
         <input class="form-inline input-sm form-input "placeholder="Last Name" name="lastName" id="lastName" value="<%= locals.person ? person.lastName : '' %>" required/>
         <br/>

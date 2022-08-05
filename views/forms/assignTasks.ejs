@@ -7,7 +7,7 @@
 </script>
 <div class="container" id="assignChoreForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Assign Task</h3>
-    <form action="/assignedTasks" method="POST">
+    <form action="/assignedTasks<%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <div id="unassignedTasksTable" class="taskTable"></div>
         <br/>
         <label class="form-label" for="assignPerson">Assign to Person:</label>

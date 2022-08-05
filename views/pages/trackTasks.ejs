@@ -83,13 +83,10 @@
   };
  </script>
 
-  <div class="container">
+<div class="container">
     <div class="row">
         <div class="">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Track Tasks</h4>
-                </div>
+          <% if (!mobile) { %> <div class="panel panel-default"><% } %>
             <ul class="nav nav-tabs">
               <li class="active"><a href="#choreTab">Chores</a></li>
               <li><a href="#billTab">Bills</a></li>
@@ -114,11 +111,10 @@
               <div id="assignmentTab" class="tab-pane fade">
                 <%- include ("../forms/assignTasks.ejs") %>
               </div>
-            </div>
-          </div>
+            <% if (!mobile) { %></div><% } %>
         </div>
       </div>
-    </div>
+</div> 
 
   
   <script>

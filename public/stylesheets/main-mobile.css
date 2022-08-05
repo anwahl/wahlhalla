@@ -1,0 +1,114 @@
+.tab-pane {
+    width: 100%;
+}
+.nav {
+    font-size: 14px;
+}
+.jumbotron {
+    background: #6f677e;
+    color: rgb(255, 217, 0);
+    height: 350px;}
+.btn-primary {
+    background: #845ac7;
+    border-color: #845ac7; }
+.btn-primary:hover {
+    background: #7646c1; }
+.jumbotron p {
+    color: rgb(255, 217, 0);
+    max-width: 75%;
+    margin: 1em auto 2em; }
+.navbar + .jumbotron {
+    margin-top: -75px; }
+.jumbotron .logo {
+    display: block;
+    background: #8022ac;
+    border-radius: 50%;
+    overflow: hidden;
+    width: 100px;
+    height: 100px;
+    margin: auto;
+    border: 2px solid white; }
+.jumbotron .logo img {
+    max-width: 100%; }
+  body {
+    background: rgb(234, 230, 238);
+  }
+  .form-input {
+    display: inline-block;
+    margin-top: 10px;
+  }
+  .form-label {
+    float: left;
+    clear: left;
+    width: 250px;
+    text-align: right;
+    margin-right:20px;
+    margin-top: 10px;
+  }
+  .smt-btn {
+    display: inline-block;
+  }
+  .checkbox-grp {
+    display: inline-block;
+  }
+  .list-grp {
+    display: inline-block;
+    margin-left: 250px;
+  }
+  
+  .taskTable{
+    border: 1px solid rgb(65, 60, 63);
+    border-radius: 10px;
+    width: 100%;
+  }
+  
+  .tabulator .tabulator-header .tabulator-col {
+    color: rgb(255, 217, 0);
+    background: #6f677e;
+  }
+  
+  .tabulator-row {
+    background: rgb(234, 230, 238);
+    height: 45px;
+  }
+  
+  input[type=checkbox], input[type=radio] {
+    margin: 5px;
+  }
+  .btn-primary {
+    margin: 10px;
+  }
+  
+.container {
+    width: 100%;
+    font-size: 18px;
+    padding: 6px;
+}
+.tabulator {
+    font-size: 20px;
+}
+  
+  
+.tabulator .tabulator-header {
+    background-color: #6f677e;
+}
+.subTableHolder {
+    padding: 2px;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    background: #ddd;
+}
+.subTable {
+    border: 1px solid #333;
+}
+
+
+.nav-tabs > li {
+    float:none;
+    display:inline-block;
+    zoom:1;
+}
+
+.nav-tabs {
+    text-align:center;
+}

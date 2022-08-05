@@ -2,7 +2,7 @@
 <div class="container" id="track<%=type%>sForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Incompleted Tasks</h3>
     <%- include ("../partials/filter.ejs", { id : 'incomplete'+type, type: type}) %>
-    <form action="/completeTasks?complete=1" method="POST">
+    <form action="/completeTasks?complete=1<%= locals.mobile ? '&mobile=true' : '' %>" method="POST">
         <div id="incomplete<%=type%>Table" class="taskTable"></div>
         <button class="smt-btn btn btn-primary" type="submit">Mark Complete</button>
     </form>
@@ -10,7 +10,7 @@
 <div class="container">
     <h3><span class="glyphicon glyphicon-check"></span> Completed Tasks</h3>
     <%- include ("../partials/filter.ejs", { id : 'complete'+type, type: type}) %>
-    <form action="/completeTasks?complete=0" method="POST">
+    <form action="/completeTasks?complete=0<%= locals.mobile ? '&mobile=true' : '' %>" method="POST">
         <div id="complete<%=type%>Table" class="taskTable"></div>
         <button class="smt-btn btn btn-primary" type="submit">Mark Incomplete</button>
     </form>

@@ -37,7 +37,7 @@
 <div class="container">
     <div class="container" id="workflowForm">
         <h3><span class="glyphicon glyphicon-plus"></span> Add Task</h3>
-        <form action="/workflow" method="POST">
+        <form action="/workflow<%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
             <label class="form-label" for="taskDescription">Description:</label><input class="form-inline input-sm form-input " placeholder="Description" name="taskDescription" id="taskDescription" required/>
             <br/>
             <label class="form-label" for="taskType">Type:</label>

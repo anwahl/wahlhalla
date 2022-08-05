@@ -30,7 +30,7 @@
 </script>
 <div class="container" id="scheduleTaskForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Schedule Task</h3>
-    <form action="/taskSchedule/<%= locals.scheduledTask ? scheduledTask.id : '' %>" method="POST">
+    <form action="/taskSchedule/<%= locals.scheduledTask ? scheduledTask.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="scheduleTask">Task:</label>
             <select class="form-inline input-sm form-input " id="scheduleTask" name="scheduleTask">
                 <option value="">...</option>

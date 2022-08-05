@@ -28,7 +28,7 @@ $.getJSON("/tasks?"<% if (!locals.taskTarget) { %> + " notInTable=taskTarget"  <
 </script>
 <div class="container" id="taskTargetForm">
     <h3><span class="glyphicon glyphicon-plus"></span> Add Task Target</h3>
-    <form action="/taskTarget/<%= locals.taskTarget ? taskTarget.id : '' %>" method="POST">
+    <form action="/taskTarget/<%= locals.taskTarget ? taskTarget.id : '' %><%= locals.mobile ? '?mobile=true' : '' %>" method="POST">
         <label class="form-label" for="taskTargetTask">Task:</label>
             <select class="form-inline input-sm form-input " id="taskTargetTask" name="taskTargetTask" required>
                 <option value="">...</option>

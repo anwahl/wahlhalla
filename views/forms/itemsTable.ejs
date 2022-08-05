@@ -7,13 +7,13 @@
     {
         label: "Edit Item",
         action:function(e,row){
-            window.location.replace('/<%=itemType%>/'+row.getIndex());
+            window.location.replace('/<%=itemType%>/'+row.getIndex()<%- locals.mobile ? '+\'?mobile=true\'' : '' %>);
         }
     },
     {
         label: "Delete Item",
         action:function(e,row){
-            window.location.replace('/delete/<%=itemType%>/'+row.getIndex());
+            window.location.replace('/delete/<%=itemType%>/'+row.getIndex()<%- locals.mobile ? '+\'?mobile=true\'' : '' %>);
       }
     }];
  
