@@ -210,7 +210,7 @@ app
     if (complete == 1) {
       let db = new database;
       let oldRows;
-      let completed = [];
+      let completed = [], allCompleted = [];
       db.query( `SELECT st.task, t.name, st.\`type\`, st.dueDate, st.timeOfDay, ast.person from assignedTask ast join scheduledTask st on ast.scheduledTask = st.id join task t on st.task = t.id where ast.id in (${ids}) and st.\`type\` != 'STANDALONE'`)
       .then( rows => {
          oldRows = rows;
@@ -282,9 +282,20 @@ app
               values: [insertValues]
               });
         }
-      }).then(rows =>{
+      })
+      db.query( `SELECT st.task, t.name, st.\`type\`, st.dueDate, st.timeOfDay, ast.person from assignedTask ast join scheduledTask st on ast.scheduledTask = st.id join task t on st.task = t.id where ast.id in (${ids})`)
+      .then( rows => {
+        if (Array.isArray(rows)){
+          rows.forEach(element => {
+            allCompleted.push(element.name);
+          });
+         } else {
+            allCompleted.push(rows.name);
+         }
+      })
+      .then(rows =>{
         if (env === 'production') {
-          var message = `"${Array.isArray(completed) ? completed.join("\", \"") : completed}" has been marked complete on ${new Date(new Date().setHours((new Date().getHours() -6)))}`;
+          var message = `"${Array.isArray(allCompleted) ? allCompleted.join("\", \"") : allCompleted}" has been marked complete on ${new Date(new Date().setHours((new Date().getHours() -6)))}`;
           process.env.TO_NUMBER.split(',').forEach(num => {
             twilio.messages.create({
               body: message,
@@ -328,6 +339,25 @@ app
      } else {
        res.redirect('/management');
      }
+  })
+  .get('/get/:table/:id',
+        check('table').notEmpty().isIn(['person','taskType','task','location','targetType','target','taskTarget','taskValue','scheduledTask','assignedTask','subTask']),
+        check('id').notEmpty().isInt(),
+        (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+  
+      let id = req.params.id;
+      var connection = mysql.createConnection(DB);
+      connection.connect();
+      var findQuery = `select * from ${table} t where t.id = ${id}`
+      connection.query(findQuery, function(err, rows, fields) {
+        if (err) throw err;
+        res.json({entity: rows[0]});
+      });
+      connection.end();
   })
   /**
   * Task Workflow
