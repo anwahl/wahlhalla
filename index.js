@@ -124,7 +124,6 @@ if (env === 'production') {
   });
 }
 
-
 /** FORCE SSL */
 
 var forceSsl = function (req, res, next) {
@@ -341,6 +340,7 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let mobile = url.parse(req.url, true).query.mobile;
+    res.status(200);
     res.render('pages/workflow', {mobile: mobile});
   })
   .post('/workflow', 
@@ -385,7 +385,11 @@ app
       })
       
       res.status(200);
-      res.redirect('/workflow', {mobile: mobile});
+      if (mobile) {
+        res.redirect('/workflow?mobile=true');
+      } else {
+        res.redirect('/workflow');
+      }
   })
  /**
   * Assigned Task

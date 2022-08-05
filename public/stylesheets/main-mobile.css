@@ -10,7 +10,11 @@
     height: 350px;}
 .btn-primary {
     background: #845ac7;
-    border-color: #845ac7; }
+    border-color: #845ac7;
+    height: 40px; }
+.btn-default {
+    height: 40px; 
+}
 .btn-primary:hover {
     background: #7646c1; }
 .jumbotron p {
@@ -18,7 +22,7 @@
     max-width: 75%;
     margin: 1em auto 2em; }
 .navbar + .jumbotron {
-    margin-top: -75px; }
+    margin-top: -50px; }
 .jumbotron .logo {
     display: block;
     background: #8022ac;
@@ -69,7 +73,6 @@
   
   .tabulator-row {
     background: rgb(234, 230, 238);
-    height: 45px;
   }
   
   input[type=checkbox], input[type=radio] {
