@@ -39,10 +39,6 @@ test('synchronous passing test', (t) => {
         res.status.should.equal(200);
         done();
     });
-
-
-
-
     });
   });
 
@@ -66,7 +62,6 @@ test('synchronous passing test', (t) => {
             .end((err, res) => {
                   res.status.should.equal(200);
                   should(res.body).be.Array;
-                  //res.body.length.should.be.eql(0);
               done();
             });
       });
@@ -74,7 +69,9 @@ test('synchronous passing test', (t) => {
         chai.request(wahlhalla)
             .get('/assignedTasks')
             .end((err, res) => {
-                  res.status.should.equal(400);
+                res.status.should.equal(400);
+                  
+                process.exit(1);
               done();
             });
       });
