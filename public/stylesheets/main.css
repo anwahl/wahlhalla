@@ -53,7 +53,7 @@ body {
 
 .taskTable{
   border: 1px solid rgb(65, 60, 63);
-  border-radius: 10px;87
+  border-radius: 10px;
 }
 
 .tabulator .tabulator-header .tabulator-col {
@@ -69,7 +69,7 @@ input[type=checkbox], input[type=radio] {
   margin: 5px;
 }
 .container {
-  padding: 20px;
+  
 }
 .btn-primary {
   margin: 10px;
@@ -77,8 +77,9 @@ input[type=checkbox], input[type=radio] {
 
 @media (min-width: 500px){
   .container {
-    width: 100%;
+    width: 99%;
     font-size: 24px;
+    padding: 2px;
   }
   .tabulator {
     font-size: 24px;
@@ -89,10 +90,11 @@ input[type=checkbox], input[type=radio] {
 @media (min-width: 1200px) {
   .container {
     width: 95%;
-    font-size: 16px;
+    font-size: 18px;
+    padding: 20px;
   }
   .tabulator {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 

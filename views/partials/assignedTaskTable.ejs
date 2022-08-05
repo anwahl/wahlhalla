@@ -37,7 +37,7 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
       { title: "Task Information",
         columns: [  
         {title:"Task Type", field:"taskTypeName"},
-        {title:"Task", field:"taskName", width:200, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
+        {title:"Task", field:"taskName", width:350, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
           return "<strong>" + cell.getValue() + "</strong>"
         }}
       ]},

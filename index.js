@@ -14,8 +14,20 @@ const schedule = require('node-schedule');
 const { body, validationResult, check, param } = require('express-validator');
 const env = process.env.NODE_ENV;
 const DB = (env === 'production' ? process.env.JAWSDB_URL : process.env.JAWSDB_SILVER_URL);
+const https = require("https");
+const fs = require("fs");
+if (env == 'development') {
+  const options = {
+    key: fs.readFileSync("./config/localhost+2-key.pem"),
+    cert: fs.readFileSync("./config/localhost+2.pem"),
+    requestCert: false,
+    rejectUnauthorized: false,
+  };
 
-
+  https.createServer(options, app).listen(8080, () => {
+    console.log(`HTTPS server started on port 8080`);
+  });
+}
 
 
 /** SENTRY */
@@ -126,10 +138,10 @@ var forceSsl = function (req, res, next) {
 
 if (env === 'production') {
   app.use(forceSsl);
+  app.use(auth(config));
 }
 app
   .use(express.static(path.join(__dirname, 'public')))
-  .use(auth(config))
   .use(bodyParser.urlencoded({extended : true}))
   .use(bodyParser.json())
   .set('views', path.join(__dirname, 'views'))
@@ -143,6 +155,8 @@ app
       return res.status(400).json({ errors: errors.array() });
     }
     let byUser = url.parse(req.url, true).query.byUser;
+    
+    res.status(200);
     res.render('pages/index', {byUser: byUser});
   })
   .get('/management', (req, res) => {
@@ -1241,3 +1255,4 @@ app
   })
 
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+  module.exports = app;
