@@ -1,4 +1,5 @@
 
+
 let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=complete ? '' : 'in' %>complete<%=type%>Table", {
     <%- include ("../partials/tabulatorConfig.ejs") %>
     ajaxURL:"/assignedTasks?type=<%=type%>&complete=<%=complete%>&byUser=<%=byUser%>",
@@ -28,12 +29,18 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
             <% } %>
         }},
       {title:"Assignee", field:"username"},
-      { title: "Location Information",
-        columns: [  
-        {title:"Location", field:"locationName"},
-        {title:"Target Type", field:"targetTypeName"},
-        {title:"Target", field:"targetName"}
-        ]
+      {title:"Target", field:"targetName", width:200, widthGrow:3,responsive:1, clickPopup:function(e, cell){
+          var data = cell.getRow().getData();
+          container = document.createElement("div"),
+          contents = "<ul style='padding:0;  margin-top:5px; margin-bottom:0; margin-right:5px;'>";
+          contents += "<li><strong>Location:</strong> " + data.locationName + "</li>";
+          contents += "<li><strong>Target Type:</strong> " + data.targetTypeName + "</li>";
+          contents += "</ul>";
+
+          container.innerHTML = contents;
+
+          return container;
+          }
       },
       { title: "Task Information",
         columns: [  
@@ -45,7 +52,7 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
       { title: "Time Information",
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
-          {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
+          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:1, formatter:function(cell, formatterParams, onRendered){
                 var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                 <% if(!complete) { %>
                   val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
@@ -73,8 +80,6 @@ let <%=complete ? '' : 'in' %>complete<%=type%>Table = new Tabulator("#<%=comple
           tableEl.setAttribute('class', "subTable");
           tableEl.setAttribute('id', "subTable" + id + "");
           holderEl.appendChild(tableEl);
-          
-          
 
           row.getElement().appendChild(holderEl);
           var <%=type%><%=complete%>subTable = new Tabulator(tableEl, {

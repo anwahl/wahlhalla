@@ -38,22 +38,33 @@
     ajaxURL:"/scheduledTasks",
     columns:[ 
     {formatter:"responsiveCollapse", width:75, minWidth:75, hozAlign:"center", resizable:false, headerSort:false},
-      { title: "Location Information",
+    { title: "Location Information",
         columns: [  
-        {title:"Location", field:"locationName" },
-        {title:"Target Type", field:"targetTypeName"},
-        {title:"Target", field:"targetName"}
+        {title:"Target", field:"targetName", width:200, widthGrow:3,responsive:1, clickPopup:function(e, cell){
+          var data = cell.getRow().getData();
+          container = document.createElement("div"),
+          contents = "<ul style='padding:0;  margin-top:5px; margin-bottom:0; margin-right:5px;'>";
+          contents += "<li><strong>Location:</strong> " + data.locationName + "</li>";
+          contents += "<li><strong>Target Type:</strong> " + data.targetTypeName + "</li>";
+          contents += "</ul>";
+
+          container.innerHTML = contents;
+
+          return container;
+        }}
         ]
       },
       { title: "Task Information",
         columns: [  
         {title:"Task Type", field:"taskTypeName"},
-        {title:"Task", field:"taskName"}
+        {title:"Task", field:"taskName", width:350, widthGrow:3,responsive:0, formatter:function(cell, formatterParams, onRendered){
+          return "<strong>" + cell.getValue() + "</strong>"
+        }}
       ]},
       { title: "Time Information",
         columns: [ 
           {title:"Frequency", field:"scheduleType"},
-          {title:"Due Date", field:"dueDate", formatter:function(cell, formatterParams, onRendered){
+          {title:"Due Date", field:"dueDate", width:150, widthGrow:3,responsive:1, formatter:function(cell, formatterParams, onRendered){
                   var val = new Date(new Date(cell.getValue()).setHours(new Date(cell.getValue()).getHours() + 29));
                  val < new Date(new Date().setHours(0, 0, 0, 0)) ? cell.getRow().getElement().style.backgroundColor = "#f5beba"
                    : val > new Date(new Date().setHours(23, 59, 59, 0)) ? cell.getRow().getElement().style.backgroundColor = "#c2f2d8" : '';
@@ -72,5 +83,9 @@
       $("#unassignedTasksTable").append("<input type='hidden' id='unassignedTask"+row.getIndex()+"' name='unassignedTask' value='"+row.getIndex()+"'/>");
       row.getElement().style.backgroundColor = "#9abcea";
     }
+  });
+
+  window.addEventListener('resize', function(){
+    unassignedTasksTable.redraw();
   });
   </script>
