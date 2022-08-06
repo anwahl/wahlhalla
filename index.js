@@ -340,7 +340,7 @@ app
        res.redirect('/management');
      }
   })
-  .get('/get/:table/:id',
+  .get('/edit/:table/:id',
         check('table').notEmpty().isIn(['person','taskType','task','location','targetType','target','taskTarget','taskValue','scheduledTask','assignedTask','subTask']),
         check('id').notEmpty().isInt(),
         (req, res) => {
@@ -350,14 +350,34 @@ app
       }
   
       let id = req.params.id;
+      let table = req.params.table;
       var connection = mysql.createConnection(DB);
       connection.connect();
-      var findQuery = `select * from ${table} t where t.id = ${id}`
+      var findQuery = `select * from ${table} t where t.id = ${id}`;
       connection.query(findQuery, function(err, rows, fields) {
         if (err) throw err;
-        res.json({entity: rows[0]});
+        res.status(200).json(rows[0]);
       });
       connection.end();
+  })
+  .post('/edit/:table/:id',
+        check('table').notEmpty().isIn(['person','taskType','task','location','targetType','target','taskTarget','taskValue','scheduledTask','assignedTask','subTask']),
+        check('id').notEmpty().isInt(),
+        body('*').optional({nullable: true}).trim().escape(),
+        (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      let db = new database;
+      let id = req.params.id;
+      var insert = `insert into ${table} t set ? where t.id = ${id}`;
+      db.query({
+        sql: insert,
+        values: [req.body]
+      }).then(rows => {
+        res.status(200).json(rows);
+      });
   })
   /**
   * Task Workflow
