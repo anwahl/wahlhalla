@@ -16,6 +16,7 @@ const env = process.env.NODE_ENV;
 const DB = (env === 'production' ? process.env.JAWSDB_URL : process.env.JAWSDB_SILVER_URL);
 const https = require("https");
 const fs = require("fs");
+const cors = require('cors');
 if (env == 'development') {
   const options = {
     key: fs.readFileSync("./config/localhost+2-key.pem"),
@@ -90,7 +91,7 @@ class database {
 
 /** TWILIO */
 
-if (env === 'production') {
+/*if (env === 'production') {
   const job = schedule.scheduleJob('30 13 * * *', function(){
     var connection = mysql.createConnection(DB);
       connection.connect();
@@ -122,7 +123,7 @@ if (env === 'production') {
       );
       connection.end();
   });
-}
+}*/
 
 /** FORCE SSL */
 
@@ -140,12 +141,16 @@ if (env === 'production') {
   app.use(auth(config));
 }
 app
+
   .use(express.static(path.join(__dirname, 'public')))
   .use(bodyParser.urlencoded({extended : true}))
   .use(bodyParser.json())
   .set('views', path.join(__dirname, 'views'))
   .set('view engine', 'ejs')
   .set('trust proxy', true)
+  .use(cors({
+    origin: '*'
+}))
   .get('/', 
       check('byUser').optional({nullable: true}).trim().escape(),
       check('mobile').optional({nullable: true}).trim().escape(),
@@ -297,11 +302,11 @@ app
         if (env === 'production') {
           var message = `"${Array.isArray(allCompleted) ? allCompleted.join("\", \"") : allCompleted}" has been marked complete on ${new Date(new Date().setHours((new Date().getHours() -6)))}`;
           process.env.TO_NUMBER.split(',').forEach(num => {
-            twilio.messages.create({
+            /*twilio.messages.create({
               body: message,
               from: process.env.FROM_NUMBER,
               to: num
-            }).then(message => console.log(message.body));
+            }).then(message => console.log(message.body));*/
           });
         }
        });
